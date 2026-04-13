@@ -1,0 +1,126 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{estilo_unir-1}[2026/04/10 Estilo base para trabajos UNIR]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[spanish]{babel}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{amsthm}
+\RequirePackage{amsfonts}
+\RequirePackage{graphicx}
+\RequirePackage[table]{xcolor}
+\RequirePackage{titling}
+\RequirePackage{titlesec}
+\RequirePackage{setspace}
+\RequirePackage[a4paper,margin=2.8cm,headheight=26pt]{geometry}
+\RequirePackage{fancyhdr}
+\RequirePackage[hypertexnames=false]{hyperref}
+
+\definecolor{azulunir}{RGB}{0,150,204}
+
+\makeatletter
+
+\newcommand{\director}[1]{\gdef\@director{#1}}
+\newcommand{\nombreciudad}[1]{\gdef\@nombreciudad{#1}}
+\newcommand{\titulacion}[1]{\gdef\@titulacion{#1}}
+
+\providecommand{\@director}{}
+\providecommand{\@nombreciudad}{}
+\providecommand{\@titulacion}{}
+
+\renewcommand{\maketitle}{\creaportada}
+
+\newcommand{\creaportada}{%
+  \begingroup
+  \thispagestyle{empty}%
+  \centering
+  \includegraphics[width=0.42\textwidth]{assets/logo_unir}\par
+  \vspace{1.5cm}
+  {\Large\bfseries Universidad Internacional de La Rioja (UNIR)\par}
+  \vspace{0.3cm}
+  {\Large\bfseries Escuela Superior de Ingeniería y Tecnología\par}
+  \vspace{0.6cm}
+  {\large\bfseries \@titulacion\par}
+  \vspace{2cm}
+  {\Huge\bfseries\color{azulunir}\thetitle\par}
+  \vfill
+  \begin{flushleft}
+    \textbf{Trabajo Fin de Estudios}\par
+    \vspace{0.4cm}
+    \textbf{Presentado por:} \theauthor\par
+    \vspace{0.2cm}
+    \textbf{Dirigido por:} \@director\par
+  \end{flushleft}
+  \vspace{2cm}
+  \begin{flushleft}
+    \textcolor{azulunir}{\textbf{Ciudad:}} \@nombreciudad\par
+    \textcolor{azulunir}{\textbf{Fecha:}} \thedate
+  \end{flushleft}
+  \clearpage
+  \endgroup
+}
+
+\AtBeginDocument{%
+  \onehalfspacing
+  \pagestyle{fancy}
+  \fancyhf{}
+  \fancyhead[R]{\theauthor\\\@titulacion}
+  \fancyfoot[R]{\thepage}
+  \fancypagestyle{plain}{%
+    \fancyhf{}
+    \fancyfoot[R]{\thepage}
+    \renewcommand{\headrulewidth}{0pt}
+  }
+  \hypersetup{
+    hidelinks,
+    pdftitle={\thetitle},
+    pdfauthor={\theauthor}
+  }
+}
+
+\makeatother
+
+\titleformat{\chapter}[hang]
+  {\Huge\bfseries\color{azulunir}}
+  {\thechapter.}
+  {0.5em}
+  {}
+
+\titleformat{name=\chapter,numberless}[hang]
+  {\Huge\bfseries\color{azulunir}}
+  {}
+  {0pt}
+  {}
+
+\theoremstyle{plain}
+\newtheorem{teo}{Teorema}[chapter]
+\newtheorem{prop}{Proposición}[chapter]
+\newtheorem{coro}{Corolario}[chapter]
+\newtheorem{lema}{Lema}[chapter]
+
+\theoremstyle{definition}
+\newtheorem{defi}{Definición}[chapter]
+\newtheorem{obs}{Observación}[chapter]
+\newtheorem{ex}{Ejemplo}[chapter]
+
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\T}{\mathbb{T}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\CC}{\mathcal{C}}
+\newcommand{\al}{\alpha}
+\newcommand{\g}{\gamma}
+\renewcommand{\d}{\delta}
+\newcommand{\s}{\sigma}
+\newcommand{\la}{\lambda}
+\newcommand{\e}{\varepsilon}
+\newcommand{\om}{\omega}
+\newcommand{\vp}{\varphi}
+\newcommand{\p}{\partial}
+\newcommand{\ds}{\displaystyle}
+\newcommand{\rank}{\mathrm{rank}}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\diag}{\mathrm{diag}}
