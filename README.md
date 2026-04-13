@@ -1,39 +1,32 @@
 # TFE LaTeX Project
 
-This repository contains the LaTeX source for a UNIR research project template.
+This repository contains the LaTeX source for a UNIR TFE document. The project is configured to be edited in VS Code and built with `latexmk`, with generated files written to `build/`.
 
 ## Repository structure
 
 - `main.tex`: main LaTeX entrypoint
 - `styles/estilo_unir-1.sty`: shared style definitions
 - `references/bibliografia.bib`: bibliography database
-- `assets/logo_unir.pdf`: UNIR logo required by the cover page
-- `.vscode/settings.json`: shared VS Code configuration for formatting and building
-- `build/`: generated LaTeX output directory
+- `assets/logo_unir.pdf`: UNIR logo used by the cover page
+- `.vscode/settings.json`: shared VS Code build and formatting settings
+- `build/`: generated output directory
 
-## What is tracked in git
+## Working environment
 
-- Source files are tracked.
-- `assets/logo_unir.pdf` is tracked because the document needs it to render.
-- `.vscode/settings.json` is tracked because it contains shared project settings.
-- Generated LaTeX files are written to `build/` and should not be committed.
-- Other `.vscode` files are ignored because they are usually user-specific.
-
-## Required tools
-
-This repository is configured for:
+The repository is set up for this toolchain:
 
 1. Visual Studio Code
-2. `LaTeX Workshop` for VS Code
+2. VS Code extension `James-Yu.latex-workshop`
 3. MiKTeX
 4. Perl
 5. `latexmk`
+6. `latexindent`
 
-On this project, `latexmk` is the build runner and writes output into `build/`.
+`latexmk` is the build runner configured in `.vscode/settings.json`. It compiles `main.tex` and writes output to `build/`. `latexindent` is used as the LaTeX formatter in VS Code and also requires Perl on Windows.
 
-## Installation and setup
+## Setup
 
-### 1. Clone and open the repository
+### 1. Clone the repository and open it in VS Code
 
 ```powershell
 git clone <repository-url>
@@ -41,9 +34,11 @@ cd <repository-folder>
 code .
 ```
 
-### 2. Install VS Code extension
+If `code` is not available in PowerShell, open the folder manually from VS Code.
 
-Install the following extension in VS Code:
+### 2. Install the required VS Code extension
+
+Install:
 
 ```text
 James-Yu.latex-workshop
@@ -54,20 +49,22 @@ James-Yu.latex-workshop
 On Windows:
 
 1. Download MiKTeX from `https://miktex.org/download`
-2. Install it for the current user unless your environment requires a machine-wide install
+2. Install it for the current user unless your machine requires a system-wide installation
 3. Open MiKTeX Console after installation
 4. Enable automatic package installation
-5. Apply updates if MiKTeX reports pending updates
+5. Apply pending updates
+
+MiKTeX provides the LaTeX executables used by this project, including `pdflatex`. It can also install missing packages the first time the document is built.
 
 ### 4. Install Perl
 
-This repository uses `latexmk`, so Perl must be available on `PATH`.
+Perl is required because both `latexmk` and `latexindent` depend on it in this setup.
 
 Recommended on Windows:
 
 1. Download Strawberry Perl from `https://strawberryperl.com/`
 2. Install the current 64-bit release
-3. Restart VS Code after installation
+3. Restart VS Code after installation so the updated `PATH` is picked up
 
 ### 5. Verify the toolchain
 
@@ -76,28 +73,32 @@ Open a new terminal in the repository root and run:
 ```powershell
 pdflatex --version
 latexmk -v
+latexindent -v
 perl -v
 ```
 
-If all three commands work, the environment is ready.
+The environment is ready when all four commands return version information without errors.
 
-## First build in VS Code
+## First build
 
-1. Open [main.tex](c:/Users/oolog/Desktop/UNIR/TFE/main.tex#L1)
+### Build from VS Code
+
+1. Open [main.tex](/c:/Users/oolog/Desktop/UNIR/TFE/main.tex)
 2. Run `LaTeX Workshop: Build LaTeX project`
-3. The PDF should be generated in `build/main.pdf`
-4. LaTeX Workshop should open the PDF preview in a VS Code tab
+3. Confirm that `build/main.pdf` is created
+4. Confirm that VS Code opens the PDF preview in a tab
 
-This repository already includes workspace settings for:
+The repository already includes shared VS Code settings for:
 
-- LaTeX formatting through `latexindent`
 - format on save for LaTeX files
-- `latexmk` builds
-- output written to `build/`
+- `latexindent` as the formatter
+- `latexmk` as the default build recipe
+- `build/` as the output directory
+- PDF preview inside a VS Code tab
 
-## Manual build
+### Build from the terminal
 
-If you want to compile outside VS Code:
+Run this from the repository root:
 
 ```powershell
 latexmk -synctex=1 -interaction=nonstopmode -file-line-error -pdf -outdir=build main.tex
@@ -111,11 +112,19 @@ latexmk -synctex=1 -interaction=nonstopmode -file-line-error -pdf -outdir=build 
 - Keep static files such as logos in `assets/`
 - Do not edit files inside `build/`
 
+## Git behavior
+
+- Source files are tracked
+- `assets/logo_unir.pdf` is tracked because the document needs it to render
+- `.vscode/settings.json` is tracked because it contains shared project settings
+- Generated LaTeX files should not be committed
+- Other `.vscode` files are ignored because they are usually user-specific
+
 ## Troubleshooting
 
-### `latexmk` does not run
+### `latexmk` or `latexindent` does not run
 
-Check that Perl is installed:
+Check that Perl is installed and available on `PATH`:
 
 ```powershell
 perl -v
@@ -123,11 +132,12 @@ perl -v
 
 If that fails, reinstall Strawberry Perl and restart VS Code.
 
-### `pdflatex` works but VS Code does not build
+### `pdflatex` works in the terminal but VS Code does not build
 
 1. Restart VS Code
 2. Run `Developer: Reload Window`
-3. Run `LaTeX Workshop: Build LaTeX project`
+3. Run `LaTeX Workshop: Build LaTeX project` again
+4. Check that VS Code was opened after MiKTeX and Perl were installed
 
 ### MiKTeX reports missing packages
 
@@ -137,6 +147,6 @@ Open MiKTeX Console and:
 2. install pending updates
 3. rebuild the project
 
-### The repository root looks cluttered
+### Files such as `.aux`, `.log`, or `.pdf` appear in the repository root
 
-The intended generated output location is `build/`. If root-level `.aux`, `.log`, `.pdf`, or similar files exist, they are leftover artifacts from older builds and can be cleaned safely.
+The intended output directory is `build/`. Root-level generated files are leftover artifacts from older builds and can be removed safely.
