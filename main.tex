@@ -8,10 +8,10 @@
 \usepackage[natbibapa]{apacite}
 
 \title{Desarrollo de un sistema de predicción de resultados de partidos de fútbol mediante técnicas de Machine Learning}
-\titulacion{Máster en Ingeniería Matemática y Computación}
+\titulacion{Máster Universitario en Inteligencia artificial}
 \author{Arnau Armengol Sayavera, Laura Chavarria Solé y Oriol Ologaray Arasa}
 \date{10 de abril de 2026}
-\director{Nombre y apellidos del director o directora}
+\director{Víctor Daniel Díaz Suárez}
 \nombreciudad{Barcelona}
 
 \begin{document}
@@ -33,6 +33,7 @@ Write here a short abstract in English. Include the aim of the project, methodol
 
 \textbf{Keywords:} keyword 1; keyword 2; keyword 3.
 
+
 \mainmatter
 \chapter{Introducción}
 \section{Motivación}
@@ -41,6 +42,13 @@ Write here a short abstract in English. Include the aim of the project, methodol
 
 \chapter{Contexto y estado del arte}
 \section{Contexto del problema}
+El fútbol es uno de los deportes con mayor impacto social y económico a nivel mundial. En los últimos años, los datos se han convertido en un campo más del deporte. Los sistemas de captura de eventos y de seguimiento óptico registran cada acción del partido con un nivel de detalle que hasta hace poco era inviable, y esa información se utiliza tanto para el análisis táctico como para la producción audiovisual o las apuestas deportivas \citep{goes2021bigdata, rein2016bigdata}.
+
+En este contexto, la predicción del resultado de un partido constituye uno de los problemas más estudiados y más complejos de la analítica deportiva. El fútbol es un deporte de pocos goles, con una alta variabilidad entre encuentros y en el que el resultado final depende en gran medida de lo que ocurre durante el propio partido, de modo que las predicciones precisas resultan especialmente difíciles, incluso para profesionales del sector.
+
+La mayor parte de los sistemas de predicción existentes se apoyan en información previa al inicio del encuentro, como resultados históricos, ratings de equipos o cuotas de apuestas. Sin embargo, estos enfoques no aprovechan la información que se genera durante el propio partido, lo que limita su capacidad para adaptarse a la situación real del juego. Tal y como se detalla en el estado del arte, los trabajos que sí incorporan datos en tiempo real se centran habitualmente en valorar acciones individuales o en modelar secuencias de eventos, sin orientarse de forma explícita a la predicción del resultado final a medida que el partido avanza.
+
+El objetivo de este trabajo es abordar este problema desarrollando un sistema capaz de predecir la probabilidad de cada resultado (victoria local, empate y victoria visitante) a partir de métricas acumuladas minuto a minuto, de modo que la predicción pueda actualizarse de forma continua durante el encuentro y resulte útil en aplicaciones como el análisis táctico, el \textit{broadcasting} o las apuestas \textit{in-play}.
 
 \section{Estado del arte}
 En los últimos años, la predicción de resultados en eventos deportivos ha sido abordada mediante diversas técnicas de aprendizaje automático, evolucionando desde modelos estadísticos tradicionales hacia enfoques más complejos basados en datos y aprendizaje profundo. En este contexto, los estudios existentes puede organizarse en diferentes líneas de investigación en función del tipo de datos utilizados y de las metodologías empleadas.
@@ -125,13 +133,41 @@ Los resultados obtenidos muestran que el modelo basado en LSTM con atención sup
 
 Aun así, el enfoque presenta algunas limitaciones. En primer lugar, requiere grandes volúmenes de datos para su entrenamiento, lo que puede dificultar su aplicación en contextos con disponibilidad limitada de información. Además, la complejidad del modelo reduce su interpretabilidad en comparación con modelos más simples, dificultando la comprensión de las decisiones tomadas por el sistema.
 
-\section{Conclusiones}
-
-
 \chapter{Objetivos concretos y metodología de trabajo}
 \section{Objetivo general}
 \section{Objetivos específicos}
 \section{Metodología del trabajo}
+Para alcanzar los objetivos planteados en este proyecto, se adopta una metodología ágil que combina dos marcos de trabajo complementarios: \textbf{Scrum} \citep{schwaber2020scrum}, que se encarga de la gestión del proyecto, y \textbf{CRISP-DM} (\textit{Cross Industry Standard Process for Data Mining}) \citep{chapman2000crispdm}, que organiza el proceso técnico de un proyecto basado en datos. El uso conjunto de ambos marcos permite adaptar la planificación del proyecto a los resultados que se van obteniendo en cada fase.
+
+\textbf{Scrum} se emplea para estructurar el desarrollo del proyecto en iteraciones cortas, de modo que el alcance y las prioridades puedan ajustarse en cada ciclo a partir de los resultados obtenidos. Este enfoque es especialmente adecuado en contextos donde la validez de las decisiones, como la selección de variables o la elección del modelo, solo puede comprobarse mediante la experimentación. Además, este marco de trabajo incorpora eventos específicos orientados a la planificación, la evaluación del progreso y la mejora continua del proceso.
+
+Por su parte, \textbf{CRISP-DM} es un marco ampliamente utilizado para proyectos de minería y análisis de datos y, por su estructura y metodología, puede ser adaptado también para proyectos de inteligencia artificial como el planteado en este trabajo. CRISP-DM aborda el desarrollo en seis fases que se revisan y ajustan a lo largo del proyecto: comprensión del problema, comprensión de los datos, preparación de los datos, modelado, evaluación y despliegue. La naturaleza cíclica de este marco es especialmente relevante en el contexto del proyecto, ya que los resultados obtenidos en fases avanzadas pueden llevar a revisar decisiones tomadas anteriormente, como la selección de variables o el preprocesamiento de los datos.
+
+\subsection{Fases del proyecto}
+Las seis fases de CRISP-DM se particularizan para el presente trabajo de la siguiente manera:
+
+\subsubsection{Fase 1. Comprensión del problema (\textit{Business Understanding})}
+En esta primera fase se delimita el alcance del proyecto y se establecen las condiciones que determinan su éxito. El objetivo consiste en desarrollar un sistema capaz de predecir, a partir de métricas acumuladas durante el transcurso de un partido de fútbol, la probabilidad de cada uno de los tres resultados posibles: victoria local, empate y victoria visitante. Se identifican los principales ámbitos de aplicación del sistema, entre ellos el análisis táctico por parte del cuerpo técnico, la generación de contenidos para \textit{broadcasting} y los sistemas de apuestas deportivas \citep{goes2021bigdata, rein2016bigdata}. \textcolor{red}{A partir de este análisis, el objetivo se formaliza como una tarea de clasificación multi-clase y se fija como criterio de éxito alcanzar una precisión superior al 70\,\% sobre un conjunto de test independiente.}
+
+\subsubsection{Fase 2. Comprensión de los datos (\textit{Data Understanding})}
+La fuente de datos principal del proyecto es el repositorio \textit{StatsBomb Open Data} \citep{statsbomb2024opendata}, que proporciona registros detallados de partidos de diversas competiciones y temporadas. Cada partido incluye información sobre acciones individuales como pases, tiros o faltas con atributos como la localización en el campo, el minuto de juego y el jugador implicado. En esta fase se descargan y analizan todos los datos disponibles para caracterizar su estructura, evaluar su calidad y detectar posibles limitaciones. Se lleva a cabo un análisis exploratorio de datos (EDA) con el fin de estudiar la distribución de los datos, detectar valores atípicos, analizar correlaciones entre variables y evaluar posibles sesgos que puedan condicionar las decisiones de las fases posteriores.
+
+\subsubsection{Fase 3. Preparación de los datos (\textit{Data Preparation})}
+Esta fase tiene como objetivo transformar los datos brutos del repositorio \textit{StatsBomb} en un dataset estructurado y listo para el modelado. El proceso se organiza en tres pasos principales. En primer lugar, a partir de los datos de acciones individuales se construye un dataset tabular con métricas acumuladas minuto a minuto para cada partido, tales como tiros a puerta, posesión, pases completados, goles esperados o xG \citep{rathke2017xg}, entradas, faltas, tarjetas y córneres, entre otras. En segundo lugar, se aplican técnicas de limpieza (tratamiento de valores ausentes, detección de inconsistencias y normalización de variables numéricas) y codificación de variables categóricas. Finalmente, se realiza un proceso de ingeniería de características orientado a crear variables derivadas que puedan mejorar la capacidad predictiva de los modelos \citep{kuhn2019feature}.
+
+\subsubsection{Fase 4. Modelado (\textit{Modeling})}
+En esta fase se entrenan y comparan distintos algoritmos de clasificación multi-clase con el objetivo de evaluar diferentes estrategias de aprendizaje sobre el mismo conjunto de datos y bajo un procedimiento experimental idéntico. Se contemplan tanto modelos clásicos de aprendizaje automático basados en métodos \textit{ensemble} como modelos de aprendizaje profundo, lo que permite contrastar enfoques de distinta complejidad y naturaleza.
+Para la selección de hiperparámetros se emplean técnicas de \textit{grid search}, búsqueda aleatoria y optimización bayesiana \citep{bergstra2012random, snoek2012bayesian}. La estimación del rendimiento durante el entrenamiento se realiza mediante validación cruzada estratificada \citep{kohavi1995cv}, garantizando que la proporción de las tres clases se mantiene en cada partición.
+
+\subsubsection{Fase 5. Evaluación (\textit{Evaluation})}
+Los modelos entrenados en la fase anterior se comparan utilizando un conjunto de test formado por datos de partidos no utilizados durante el entrenamiento y un conjunto de métricas específicas \citep{sokolova2009metrics}. Además, se analiza la fiabilidad del resultado según el minuto del partido en que se realiza la predicción, ya que de esta forma se puede determinar a partir de qué momento del partido las predicciones resultan más fiables.
+
+\subsubsection{Fase 6. Despliegue (\textit{Deployment})}
+El modelo con mejores métricas de predicción se integra en una plataforma interactiva que permite introducir o simular datos de un partido y visualizar la evolución de las probabilidades de cada resultado minuto a minuto.
+
+
+\subsection{Herramientas y tecnologías}
+El desarrollo se realiza íntegramente en Python porque es el lenguaje de programación líder para inteligencia artificial y ciencia de datos gracias a su amplio ecosistema de librerías especializadas \citep{raschka2020python}, que cubren desde el preprocesamiento de los datos hasta el modelado y la evaluación de modelos de aprendizaje automático. Para la obtención de los datos se utiliza \texttt{statsbombpy}, que permite descargar los datos del repositorio \textit{StatsBomb} directamente desde Python. El control de versiones tanto del código como de la memoria del proyecto se gestiona con Git y GitHub porque permite mantener la trazabilidad del desarrollo a lo largo del proyecto.
 
 
 
