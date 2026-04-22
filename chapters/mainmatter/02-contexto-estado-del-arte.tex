@@ -4,9 +4,9 @@ El fútbol es uno de los deportes con mayor impacto social y económico a nivel 
 
 En este contexto, la predicción del resultado de un partido constituye uno de los problemas más estudiados y más complejos de la analítica deportiva. El fútbol es un deporte de pocos goles, con una alta variabilidad entre encuentros y en el que el resultado final depende en gran medida de lo que ocurre durante el propio partido, de modo que las predicciones precisas resultan especialmente difíciles, incluso para profesionales del sector.
 
-La mayor parte de los sistemas de predicción existentes se apoyan en información previa al inicio del encuentro, como resultados históricos, ratings de equipos o cuotas de apuestas. Sin embargo, estos enfoques no aprovechan la información que se genera durante el propio partido, lo que limita su capacidad para adaptarse a la situación real del juego. Tal y como se detalla en el estado del arte, los trabajos que sí incorporan datos en tiempo real se centran habitualmente en valorar acciones individuales o en modelar secuencias de eventos, sin orientarse de forma explícita a la predicción del resultado final a medida que el partido avanza.
+La mayor parte de los sistemas de predicción existentes se apoyan en información previa al inicio del encuentro, como resultados históricos, ratings de equipos o cuotas de apuestas. Sin embargo, estos enfoques no aprovechan la información que refleja la evolución del partido una vez iniciado, lo que limita su capacidad para adaptarse al estado real del juego. Tal y como se detalla en el estado del arte, algunos trabajos incorporan información temporal adicional, ya sea mediante actualizaciones dinámicas entre partidos o mediante el análisis secuencial de eventos intrapartido. No obstante, estos enfoques no siempre se orientan de forma explícita a la predicción del resultado final a medida que avanza el encuentro.
 
-El objetivo de este trabajo es abordar este problema desarrollando un sistema capaz de predecir la probabilidad de cada resultado (victoria local, empate y victoria visitante) a partir de métricas acumuladas minuto a minuto, de modo que la predicción pueda actualizarse de forma continua durante el encuentro y resulte útil en aplicaciones como el análisis táctico, el \textit{broadcasting} o las apuestas \textit{in-play}.
+El objetivo del presente trabajo es abordar este problema desarrollando un sistema capaz de predecir la probabilidad de cada resultado (victoria local, empate y victoria visitante) a partir de datos históricos de eventos correspondientes a partidos ya disputados, transformados en métricas acumuladas minuto a minuto. De este modo, no se plantea un sistema de inferencia en tiempo real sobre un flujo de datos en vivo, sino una predicción dinámica intrapartido simulada a partir de información histórica, con aplicación potencial en contextos como el análisis táctico, el \textit{broadcasting} o las apuestas \textit{in-play}.
 
 \section{Estado del arte}
 En los últimos años, la predicción de resultados en eventos deportivos ha sido abordada mediante diversas técnicas de aprendizaje automático, evolucionando desde modelos estadísticos tradicionales hacia enfoques más complejos basados en datos y aprendizaje profundo. En este contexto, los estudios existentes puede organizarse en diferentes líneas de investigación en función del tipo de datos utilizados y de las metodologías empleadas.
@@ -53,7 +53,7 @@ Finalmente, el estudio concluye que, aunque el uso de \textit{machine learning} 
 
 Este trabajo proporciona una visión global del estado actual de la investigación en predicción deportiva mediante \textit{machine learning}, permitiendo contextualizar los estudios previamente analizados y evidenciando tanto las fortalezas como las limitaciones de los enfoques basados en datos históricos.
 
-\subsection{Enfoques basados en datos en tiempo real}
+\subsection{Enfoques basados en información temporal y dinámica del juego}
 
 \subsubsection{Using ELO ratings for match result prediction in association football}
 
@@ -71,13 +71,13 @@ El estudio realizado por \cite{decroos2019actions} propone un enfoque avanzado p
 
 El núcleo del trabajo es el modelo denominado VAEP (\textit{Valuing Actions by Estimating Probabilities}), que asigna un valor a cada acción en función de cómo modifica la probabilidad de que un equipo marque o conceda un gol en un futuro cercano. Para ello, se emplean modelos de aprendizaje automático que estiman estas probabilidades a partir del estado actual del juego, teniendo en cuenta el contexto espacial y temporal de cada acción.
 
-Este enfoque permite analizar el partido como una secuencia dinámica de eventos, capturando la evolución del juego en tiempo real y proporcionando una representación más detallada del impacto de cada acción. De este modo, el modelo no se limita a evaluar resultados finales, sino que ofrece una valoración continua del estado del partido a medida que se producen los eventos.
+Este enfoque permite analizar el partido como una secuencia dinámica de eventos, capturando la evolución del juego de forma secuencial y proporcionando una representación más detallada del impacto de cada acción. De este modo, el modelo no se limita a evaluar resultados finales, sino que ofrece una valoración continua del estado del partido a medida que se producen los eventos.
 
 Uno de los principales aportes del estudio es la capacidad de cuantificar la contribución individual de cada acción al resultado del partido, lo que permite identificar patrones de juego y evaluar el rendimiento de jugadores y equipos de forma más granular. Además, el uso de datos secuenciales y contexto espacial supone un avance significativo respecto a enfoques basados únicamente en estadísticas agregadas.
 
 Sin embargo, el modelo presenta limitaciones. En particular, su complejidad computacional es superior a la de modelos más simples, y requiere acceso a datos detallados de eventos, lo que puede dificultar su implementación en algunos contextos. Asimismo, aunque proporciona una estimación continua del impacto de las acciones, no está diseñado directamente para predecir el resultado final del partido en términos de victoria, empate o derrota.
 
-Pese a estas limitaciones, este trabajo representa un avance fundamental en el análisis del fútbol mediante \textit{machine learning}, al introducir un enfoque basado en eventos en tiempo real que permite modelar la evolución del juego de manera dinámica.
+Pese a estas limitaciones, este trabajo representa un avance fundamental en el análisis del fútbol mediante \textit{machine learning}, al introducir un enfoque basado en eventos que permite modelar la evolución del juego de manera dinámica.
 
 \subsubsection{Sports match prediction model based on LSTM and attention mechanism}
 
