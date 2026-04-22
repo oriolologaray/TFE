@@ -23,190 +23,21 @@
 % \listoffigures
 % \listoftables
 
-\chapter{Resumen}
-Redacta aquí un resumen breve del trabajo en español. Incluye objetivo, metodología, resultados y conclusiones en un máximo de 150 palabras.
-
-\textbf{Palabras clave:} palabra clave 1; palabra clave 2; palabra clave 3.
-
-\chapter{Abstract}
-Write here a short abstract in English. Include the aim of the project, methodology, results, and conclusions in no more than 150 words.
-
-\textbf{Keywords:} keyword 1; keyword 2; keyword 3.
-
+\input{chapters/frontmatter/01-resumen}
+\input{chapters/frontmatter/02-abstract}
 
 \mainmatter
-\chapter{Introducción}
-\section{Motivación}
-
-El fútbol es uno de los deportes más populares a nivel mundial, además de constituir un fenómeno social, cultural y económico de gran relevancia, movilizando a millones de aficionados y generando un impacto significativo en la industria del deporte. En este contexto, la capacidad de analizar y predecir el resultado de los partidos (o al menos, de conocer la probabilidad de victoria de cada equipo) representa una herramienta de gran valor tanto para los clubes y sus aficionados como para analistas y casas de apuestas.
-
-En los años recientes, con el auge de las herramientas de inteligencia artificial y el aprendizaje automático, la recolección de datos deportivos y su análisis ha experimentado un crecimiento enorme. Sin embargo, la predicción de resultados a partir de estos datos sigue representando un problema complejo, debido a la aleatoriedad presente en el deporte y a la naturaleza dinámica del juego con factores difícilmente representables en los modelos actuales.
-
-Los modelos tradicionales de predicción de resultados presentan limitaciones significativas, ya que no son capaces de capturar relaciones no lineales ni aprovechar la gran cantidad de información de la que se dispone actualmente. En este sentido, las técnicas de \textit{machine learning} ofrecen una alternativa prometedora, puesto que permiten desarrollar modelos predictivos más complejos que pueden resultar en una predicción basada en más factores y, por tanto, más informada.
-
-Por todo ello, el desarrollo de un sistema de predicción de resultados de partidos de fútbol mediante técnicas de \textit{machine learning} presenta un reto tanto a nivel académico como aplicado, ya que requiere un gran nivel de conocimiento técnico y también del juego y de los factores que influyen en su desarrollo.
-
-\section{Planteamiento del trabajo}
-
-El planteamiento principal de este trabajo se basa en desarrollar un sistema de predicción de resultados de partidos de fútbol desde un enfoque basado en datos, utilizando técnicas de \textit{machine learning}. Para ello, se usará información histórica de partidos y estadísticas relevantes para entrenar distintos modelos predictivos.
-
-Primeramente, se llevará a cabo la recopilación de datos provenientes de distintas fuentes, que podrán incluir tanto estadísticas finales de partidos como información más detallada basada en eventos y tiempo de juego, en función de su disponibilidad. Posteriormente, se realizará un tratamiento y preprocesado de los datos, con el objetivo de extraer variables relevantes que permitan medir el rendimiento de los equipos y estimar la probabilidad de victoria.
-
-En cuanto a la modelización, se compararán distintos algoritmos de \textit{machine learning}, incluyendo modelos como Random Forest y XGBoost, para determinar cuál ofrece el mejor rendimiento en la predicción de resultados. La evaluación de los modelos se realizará mediante técnicas de validación cruzada y utilizando métricas adecuadas de predicción probabilística, complementadas con métricas tradicionales como la \textit{accuracy} o el \textit{F1-score}. Finalmente, se considerará el uso de redes neuronales como alternativa adicional.
-
-El objetivo principal del trabajo será desarrollar un sistema de predicción que permita estimar de manera precisa la probabilidad de victoria de cada equipo dadas unas circunstancias y métricas de juego definidas. De forma complementaria, se pretende analizar el impacto de las variables y modelos utilizados en cada iteración del proceso de modelización, comparando los resultados y las métricas de rendimiento de los diferentes enfoques.
-
-Finalmente, el alcance del trabajo estará condicionado por la disponibilidad y calidad de los datos empleados, y su efectividad será evaluada considerando la alta aleatoriedad inherente al deporte.
-
-\section{Estructura del trabajo}
-
-
-
-\chapter{Contexto y estado del arte}
-\section{Contexto del problema}
-El fútbol es uno de los deportes con mayor impacto social y económico a nivel mundial. En los últimos años, los datos se han convertido en un campo más del deporte. Los sistemas de captura de eventos y de seguimiento óptico registran cada acción del partido con un nivel de detalle que hasta hace poco era inviable, y esa información se utiliza tanto para el análisis táctico como para la producción audiovisual o las apuestas deportivas \citep{goes2021bigdata, rein2016bigdata}.
-
-En este contexto, la predicción del resultado de un partido constituye uno de los problemas más estudiados y más complejos de la analítica deportiva. El fútbol es un deporte de pocos goles, con una alta variabilidad entre encuentros y en el que el resultado final depende en gran medida de lo que ocurre durante el propio partido, de modo que las predicciones precisas resultan especialmente difíciles, incluso para profesionales del sector.
-
-La mayor parte de los sistemas de predicción existentes se apoyan en información previa al inicio del encuentro, como resultados históricos, ratings de equipos o cuotas de apuestas. Sin embargo, estos enfoques no aprovechan la información que se genera durante el propio partido, lo que limita su capacidad para adaptarse a la situación real del juego. Tal y como se detalla en el estado del arte, los trabajos que sí incorporan datos en tiempo real se centran habitualmente en valorar acciones individuales o en modelar secuencias de eventos, sin orientarse de forma explícita a la predicción del resultado final a medida que el partido avanza.
-
-El objetivo de este trabajo es abordar este problema desarrollando un sistema capaz de predecir la probabilidad de cada resultado (victoria local, empate y victoria visitante) a partir de métricas acumuladas minuto a minuto, de modo que la predicción pueda actualizarse de forma continua durante el encuentro y resulte útil en aplicaciones como el análisis táctico, el \textit{broadcasting} o las apuestas \textit{in-play}.
-
-\section{Estado del arte}
-En los últimos años, la predicción de resultados en eventos deportivos ha sido abordada mediante diversas técnicas de aprendizaje automático, evolucionando desde modelos estadísticos tradicionales hacia enfoques más complejos basados en datos y aprendizaje profundo. En este contexto, los estudios existentes puede organizarse en diferentes líneas de investigación en función del tipo de datos utilizados y de las metodologías empleadas.
-
-\subsection{Enfoques basados en datos históricos previos}
-
-\subsubsection{Predictive analysis and modelling football results using machine learning approach for English Premier League}
-
-El trabajo realizado por \cite{baboota2019predictive} aborda la predicción de resultados en partidos de fútbol de la Premier League (liga inglesa) mediante la aplicación de técnicas de \textit{machine learning}. El objetivo principal del estudio es analizar la capacidad de distintos algoritmos de clasificación para predecir el resultado final de un encuentro, formulado como un problema multiclase con tres posibles salidas: victoria local, empate o victoria visitante.
-
-Para ello, los autores utilizan datos históricos de partidos, a partir de los cuales construyen un conjunto de variables representativas del rendimiento de los equipos. Estas variables incluyen estadísticas agregadas como resultados previos, rachas de victorias o derrotas y métricas derivadas del desempeño reciente.
-
-El estudio evalúa diferentes algoritmos de aprendizaje supervisado, entre los que destacan la regresión logística, los árboles de decisión y los métodos de ensamblado, en particular Random Forest. Los resultados obtenidos muestran que los modelos basados en ensamblado superan a los modelos lineales tradicionales en términos de precisión, alcanzando valores en torno al 65--70\%. Este resultado pone de manifiesto la capacidad de los modelos no lineales para capturar relaciones complejas entre las variables de entrada y el resultado del partido.
-
-No obstante, el enfoque presenta varias limitaciones. En primer lugar, el modelo se basa exclusivamente en información previa al partido, lo que impide capturar la evolución dinámica del juego y los eventos que ocurren durante el encuentro. En segundo lugar, las variables utilizadas son principalmente agregadas, lo que reduce la capacidad del modelo para representar la naturaleza secuencial y contextual del fútbol. Por último, el estudio no aborda en profundidad la interpretabilidad del modelo, limitando la comprensión del impacto de cada variable en la predicción final.
-
-A pesar de estas limitaciones, este trabajo constituye una base sólida en la aplicación de técnicas de aprendizaje automático a la predicción de resultados deportivos, demostrando la viabilidad de estos enfoques y estableciendo un punto de partida para investigaciones posteriores orientadas a la incorporación de datos en tiempo real y modelos más complejos.
-
-\subsubsection{Random forest model identifies serve strength as a key predictor of tennis match outcome}
-
-El trabajo desarrollado por \cite{gao2019random} aborda la predicción de resultados en partidos de tenis mediante el uso de técnicas de \textit{machine learning}, con especial enfoque en modelos basados en \textit{Random Forest}. El objetivo principal del estudio es evaluar la capacidad de estos modelos para predecir el resultado de un partido a partir de datos históricos detallados de encuentros y jugadores.
-
-Para ello, los autores recopilan y procesan una de las bases de datos más completas de partidos de tenis disponibles, realizando tareas de limpieza y preparación de datos con el fin de construir un conjunto de variables representativas del rendimiento de los jugadores. Estas variables incluyen métricas relacionadas con el desempeño en el servicio, puntos ganados y otras estadísticas relevantes del juego.
-
-El enfoque metodológico se basa en la aplicación de modelos relativamente simples de aprendizaje automático, lo que permite tiempos de entrenamiento y predicción reducidos, facilitando la incorporación de nuevos datos y la posibilidad de realizar predicciones de manera eficiente. A partir de estos modelos, el estudio alcanza niveles de precisión superiores al 80\%, superando incluso las predicciones basadas en cuotas de apuestas tradicionales.
-
-Uno de los principales aportes del trabajo es la identificación de la fuerza del servicio como la variable más determinante en la predicción del resultado del partido. En particular, métricas como el porcentaje de puntos ganados con el primer y segundo servicio se revelan como factores clave en el rendimiento de los jugadores y, por tanto, en el desenlace del partido. Este descubrimiento pone de manifiesto la importancia de analizar la contribución individual de las variables en modelos predictivos deportivos.
-
-El estudio presenta limitaciones relevantes. Al igual que otros trabajos basados en datos históricos, el modelo no incorpora información en tiempo real ni considera la evolución del partido durante su desarrollo, lo que limita su aplicabilidad en escenarios dinámicos. Asimismo, aunque identifica variables clave, el análisis de interpretabilidad se limita a la importancia de variables proporcionada por el modelo, sin explorar técnicas más avanzadas de explicación.
-
-A pesar de estas limitaciones, este trabajo destaca por demostrar que modelos relativamente simples pueden alcanzar altos niveles de precisión en la predicción de resultados deportivos, así como por su contribución en la identificación de variables con alto poder predictivo, aspecto especialmente relevante en el contexto del presente trabajo.
-
-\subsubsection{The use of machine learning in sport outcome prediction: A review}
-
-El trabajo desarrollado por \cite{horvat2020review} presenta una revisión exhaustiva del uso de técnicas de \textit{machine learning} en la predicción de resultados deportivos. En este estudio, los autores analizan más de 100 trabajos previos con el objetivo de identificar las metodologías más empleadas, los tipos de datos utilizados y las principales tendencias en este campo de investigación.
-
-Uno de los principales hallazgos del estudio es que la mayoría de los trabajos abordan la predicción de resultados deportivos como un problema de clasificación supervisada, donde el objetivo es predecir una única salida (por ejemplo, victoria o derrota), siendo menos frecuente el enfoque basado en predicción de valores numéricos. Asimismo, se observa que los algoritmos más utilizados incluyen redes neuronales, máquinas de soporte vectorial y métodos basados en árboles de decisión, destacando el uso recurrente de modelos no lineales para capturar la complejidad de los datos deportivos.
-
-En relación con los datos, el estudio pone demuestra que prácticamente todos los trabajos analizados emplean algún tipo de selección y extracción de características antes de aplicar los modelos de aprendizaje automático. Este proceso resulta fundamental para mejorar el rendimiento predictivo, dado que permite identificar las variables más relevantes dentro de un contexto caracterizado por alta variabilidad y ruido. Además, los autores señalan que los conjuntos de datos suelen organizarse de forma cronológica, utilizando técnicas como la segmentación temporal y la validación cruzada para evaluar el rendimiento de los modelos.
-
-Otro aspecto relevante identificado en la revisión es la falta de estandarización en los enfoques utilizados. La diversidad en los conjuntos de datos, las variables empleadas y las metodologías de evaluación dificulta la comparación directa entre estudios y limita la generalización de los resultados obtenidos. Asimismo, los autores destacan que, a pesar del uso de técnicas avanzadas de aprendizaje automático, la precisión de los modelos se ve condicionada por la naturaleza inherentemente incierta de los eventos deportivos.
-
-Finalmente, el estudio concluye que, aunque el uso de \textit{machine learning} ha permitido avances significativos en la predicción de resultados deportivos, todavía existen importantes retos en el campo. Entre ellos, destacan la necesidad de mejorar la calidad y consistencia de los datos, así como la incorporación de nuevas fuentes de información que permitan capturar mejor la complejidad de los eventos deportivos.
-
-Este trabajo proporciona una visión global del estado actual de la investigación en predicción deportiva mediante \textit{machine learning}, permitiendo contextualizar los estudios previamente analizados y evidenciando tanto las fortalezas como las limitaciones de los enfoques basados en datos históricos.
-
-\subsection{Enfoques basados en datos en tiempo real}
-
-\subsubsection{Using ELO ratings for match result prediction in association football}
-
-El trabajo desarrollado por \cite{hvattum2010elo} analiza el uso del sistema de puntuación ELO para la predicción de resultados en fútbol. El objetivo principal del estudio es evaluar si las valoraciones dinámicas de los equipos, actualizadas tras cada partido, pueden mejorar la precisión en la estimación de resultados frente a otros enfoques tradicionales.
-
-El sistema ELO, originalmente desarrollado para el ajedrez, asigna a cada equipo una puntuación que refleja su rendimiento relativo. Esta puntuación se actualiza tras cada encuentro en función del resultado obtenido y de la diferencia esperada entre los equipos. De este modo, el modelo incorpora de manera implícita la evolución temporal del rendimiento, adaptándose a cambios en la forma de los equipos a lo largo de la competición.
-
-En el estudio, los autores utilizan las puntuaciones ELO como variable principal dentro de modelos de regresión para predecir el resultado de los partidos. Los resultados obtenidos muestran que el uso de ratings dinámicos mejora la capacidad predictiva en comparación con modelos basados únicamente en estadísticas históricas agregadas. Además, el enfoque presenta la ventaja de ser computacionalmente eficiente y fácilmente actualizable tras cada partido, lo que lo hace adecuado para entornos donde se requiere una actualización continua de las predicciones.
-
-No obstante, el modelo presenta limitaciones relevantes. En primer lugar, aunque incorpora una dimensión temporal, esta se basa únicamente en resultados finales de partidos, sin considerar eventos internos del juego como tiros, posesión o acciones específicas. En segundo lugar, el sistema ELO simplifica la complejidad del fútbol al representar el rendimiento de un equipo mediante un único valor escalar, lo que limita su capacidad para capturar dinámicas más complejas del juego.
-
-\subsubsection{Actions Speak Louder than Goals: Valuing Player Actions in Soccer}
-
-El estudio realizado por \cite{decroos2019actions} propone un enfoque avanzado para el análisis del rendimiento en fútbol basado en la valoración de acciones individuales durante el partido. A diferencia de los modelos tradicionales centrados en estadísticas agregadas o resultados finales, este estudio utiliza secuencias de eventos del juego, como pases, tiros, recuperaciones y pérdidas de balón, para modelar el desarrollo del encuentro de manera más precisa.
-
-El núcleo del trabajo es el modelo denominado VAEP (\textit{Valuing Actions by Estimating Probabilities}), que asigna un valor a cada acción en función de cómo modifica la probabilidad de que un equipo marque o conceda un gol en un futuro cercano. Para ello, se emplean modelos de aprendizaje automático que estiman estas probabilidades a partir del estado actual del juego, teniendo en cuenta el contexto espacial y temporal de cada acción.
-
-Este enfoque permite analizar el partido como una secuencia dinámica de eventos, capturando la evolución del juego en tiempo real y proporcionando una representación más detallada del impacto de cada acción. De este modo, el modelo no se limita a evaluar resultados finales, sino que ofrece una valoración continua del estado del partido a medida que se producen los eventos.
-
-Uno de los principales aportes del estudio es la capacidad de cuantificar la contribución individual de cada acción al resultado del partido, lo que permite identificar patrones de juego y evaluar el rendimiento de jugadores y equipos de forma más granular. Además, el uso de datos secuenciales y contexto espacial supone un avance significativo respecto a enfoques basados únicamente en estadísticas agregadas.
-
-Sin embargo, el modelo presenta limitaciones. En particular, su complejidad computacional es superior a la de modelos más simples, y requiere acceso a datos detallados de eventos, lo que puede dificultar su implementación en algunos contextos. Asimismo, aunque proporciona una estimación continua del impacto de las acciones, no está diseñado directamente para predecir el resultado final del partido en términos de victoria, empate o derrota.
-
-Pese a estas limitaciones, este trabajo representa un avance fundamental en el análisis del fútbol mediante \textit{machine learning}, al introducir un enfoque basado en eventos en tiempo real que permite modelar la evolución del juego de manera dinámica.
-
-\subsubsection{Sports match prediction model based on LSTM and attention mechanism}
-
-La investigación desarrollada por \cite{zhang2022lstm} propone un modelo de predicción de resultados deportivos basado en redes neuronales recurrentes, concretamente en arquitecturas Long Short-Term Memory (LSTM) combinadas con mecanismos de atención. El objetivo principal del estudio es mejorar la precisión en la predicción de resultados mediante la modelización de la información como una serie temporal.
-
-A diferencia de los enfoques tradicionales basados en estadísticas agregadas, este modelo considera la evolución temporal del rendimiento de los equipos, introduciendo los datos de partidos en una secuencia ordenada en el tiempo. De este modo, el modelo es capaz de capturar dependencias temporales y patrones dinámicos en el comportamiento de los equipos, lo que resulta fundamental en un contexto tan variable como el deportivo.
-
-El modelo propuesto, denominado AS-LSTM, incorpora un mecanismo de atención que permite asignar mayor peso a ciertos momentos o características dentro de la secuencia temporal, mejorando así la capacidad del modelo para identificar información relevante. Este enfoque permite no solo capturar la evolución del rendimiento, sino también diferenciar qué eventos o periodos tienen mayor impacto en la predicción final.
-
-Los resultados obtenidos muestran que el modelo basado en LSTM con atención supera a modelos tradicionales de aprendizaje automático, demostrando una mayor capacidad para capturar patrones complejos en datos secuenciales y mejorar la precisión en la predicción de resultados deportivos.
-
-Aun así, el enfoque presenta algunas limitaciones. En primer lugar, requiere grandes volúmenes de datos para su entrenamiento, lo que puede dificultar su aplicación en contextos con disponibilidad limitada de información. Además, la complejidad del modelo reduce su interpretabilidad en comparación con modelos más simples, dificultando la comprensión de las decisiones tomadas por el sistema.
-
-\chapter{Objetivos concretos y metodología de trabajo}
-\section{Objetivo general}
-\section{Objetivos específicos}
-\section{Metodología del trabajo}
-Para alcanzar los objetivos planteados en este proyecto, se adopta una metodología ágil que combina dos marcos de trabajo complementarios: \textbf{Scrum} \citep{schwaber2020scrum}, que se encarga de la gestión del proyecto, y \textbf{CRISP-DM} (\textit{Cross Industry Standard Process for Data Mining}) \citep{chapman2000crispdm}, que se enfoca en el ciclo de vida técnico de un proyecto basado en datos. El uso conjunto de ambos marcos permite adaptar la planificación del proyecto a los resultados que se van obteniendo en cada fase.
-
-\textbf{Scrum} se emplea para estructurar el desarrollo del proyecto en iteraciones cortas, de modo que el alcance y las prioridades puedan ajustarse en cada ciclo a partir de los resultados obtenidos. Este enfoque es especialmente adecuado en contextos donde la validez de las decisiones, como la selección de variables o la elección del modelo, solo puede comprobarse mediante la experimentación. Además, este marco de trabajo incorpora eventos específicos orientados a la planificación, la evaluación del progreso y la mejora continua del proceso.
-
-Por otro lado, \textbf{CRISP-DM} es un marco ampliamente utilizado para proyectos de minería y análisis de datos y, por su estructura y metodología, puede ser adaptado también para proyectos de inteligencia artificial como el planteado en este trabajo. CRISP-DM aborda el desarrollo en seis fases que se revisan y ajustan a lo largo del proyecto: comprensión del problema, comprensión de los datos, preparación de los datos, modelado, evaluación y despliegue. La naturaleza cíclica de este marco es especialmente relevante en el contexto del proyecto, ya que los resultados obtenidos en fases avanzadas pueden llevar a revisar decisiones tomadas anteriormente, como la selección de variables o el preprocesamiento de los datos.
-
-\subsection{Fases del proyecto}
-Las seis fases de CRISP-DM se particularizan para el presente trabajo de la siguiente manera:
-
-\subsubsection{Fase 1. Comprensión del problema (\textit{Business Understanding})}
-En esta primera fase se define el alcance del proyecto y se establecen las condiciones que determinan su éxito. El objetivo es desarrollar un sistema que pueda predecir la probabilidad de cada resultado posible en un partido de fútbol, basándose en métricas acumuladas durante el partido. Se identifican los principales ámbitos de aplicación del sistema, como el análisis táctico por parte del cuerpo técnico, la generación de contenidos para \textit{broadcasting} y los sistemas de apuestas deportivas \citep{goes2021bigdata, rein2016bigdata}. \textcolor{red}{A partir de este análisis, el objetivo se formaliza como una tarea de clasificación multi-clase, con un criterio de éxito de alcanzar una precisión superior al 70\,\% sobre un conjunto de test.}
-
-\subsubsection{Fase 2. Comprensión de los datos (\textit{Data Understanding})}
-La fuente de datos principal del proyecto es el repositorio \textit{StatsBomb Open Data} \citep{statsbomb2024opendata}, que proporciona registros detallados de partidos de diversas competiciones y temporadas. Cada partido incluye información sobre acciones individuales como pases, tiros o faltas con atributos como la localización en el campo, el minuto de juego y el jugador implicado. En esta fase se descargan y analizan todos los datos disponibles para caracterizar su estructura, evaluar su calidad y detectar posibles limitaciones. Se lleva a cabo un análisis exploratorio de datos (EDA) con el fin de estudiar la distribución de los datos, detectar valores atípicos, analizar correlaciones entre variables y evaluar posibles sesgos que puedan condicionar las decisiones de las fases posteriores.
-
-\subsubsection{Fase 3. Preparación de los datos (\textit{Data Preparation})}
-Esta fase tiene como objetivo transformar los datos brutos del repositorio \textit{StatsBomb} en un dataset estructurado y listo para el modelado. El proceso se organiza en tres pasos principales. En primer lugar, a partir de los datos de acciones individuales se construye un dataset tabular con métricas acumuladas minuto a minuto para cada partido, tales como tiros a puerta, posesión, pases completados, goles esperados o xG \citep{rathke2017xg}, entradas, faltas, tarjetas y córneres, entre otras. En segundo lugar, se aplican técnicas de limpieza (tratamiento de valores ausentes, detección de inconsistencias y normalización de variables numéricas) y codificación de variables categóricas. Finalmente, se realiza un proceso de ingeniería de características orientado a crear variables derivadas que puedan mejorar la capacidad predictiva de los modelos \citep{kuhn2019feature}.
-
-\subsubsection{Fase 4. Modelado (\textit{Modeling})}
-En esta fase se entrenan y comparan distintos algoritmos de clasificación multi-clase con el objetivo de evaluar diferentes estrategias de aprendizaje sobre el mismo conjunto de datos y bajo un procedimiento experimental idéntico. Se contemplan tanto modelos clásicos de aprendizaje automático basados en métodos \textit{ensemble} como modelos de aprendizaje profundo, lo que permite contrastar enfoques de distinta complejidad y naturaleza.
-Para la selección de hiperparámetros se emplean técnicas de \textit{grid search}, búsqueda aleatoria y optimización bayesiana \citep{bergstra2012random, snoek2012bayesian}. La estimación del rendimiento durante el entrenamiento se realiza mediante validación cruzada estratificada \citep{kohavi1995cv}, garantizando que la proporción de las tres clases se mantiene en cada partición.
-
-\subsubsection{Fase 5. Evaluación (\textit{Evaluation})}
-Los modelos entrenados en la fase anterior se comparan utilizando un conjunto de test formado por datos de partidos no utilizados durante el entrenamiento y un conjunto de métricas específicas \citep{sokolova2009metrics}. Además, se analiza la fiabilidad del resultado según el minuto del partido en que se realiza la predicción, ya que de esta forma se puede determinar a partir de qué momento del partido las predicciones resultan más fiables.
-
-\subsubsection{Fase 6. Despliegue (\textit{Deployment})}
-El modelo con mejores métricas de predicción se integra en una plataforma interactiva que permite introducir o simular datos de un partido y visualizar la evolución de las probabilidades de cada resultado minuto a minuto.
-
-
-\subsection{Herramientas y tecnologías}
-El desarrollo se realiza íntegramente en Python porque es el lenguaje de programación líder para inteligencia artificial y ciencia de datos gracias a su amplio ecosistema de librerías especializadas \citep{raschka2020python}, que cubren desde el preprocesamiento de los datos hasta el modelado y la evaluación de modelos de aprendizaje automático. Para la obtención de los datos se utiliza \texttt{statsbombpy}, que permite descargar los datos del repositorio \textit{StatsBomb} directamente desde Python. El control de versiones tanto del código como de la memoria del proyecto se gestiona con Git y GitHub porque permite mantener la trazabilidad del desarrollo a lo largo del proyecto.
-
-
-
-\chapter{Desarrollo}
-Explica la implementación, el análisis o el trabajo experimental.
-
-\chapter{Resultados}
-Recoge los resultados principales. Puedes incluir figuras, tablas, ecuaciones y referencias bibliográficas, por ejemplo \cite{knuth1984texbook}.
-
-\chapter{Conclusiones y trabajo futuro}
-Resume las conclusiones y las posibles líneas de continuación.
+\input{chapters/mainmatter/01-introduccion}
+\input{chapters/mainmatter/02-contexto-estado-del-arte}
+\input{chapters/mainmatter/03-objetivos-metodologia}
+\input{chapters/mainmatter/04-desarrollo}
+\input{chapters/mainmatter/05-resultados}
+\input{chapters/mainmatter/06-conclusiones-trabajo-futuro}
 
 \bibliographystyle{apacite}
 \bibliography{references/bibliografia}
 
 \appendix
-\chapter{Apéndices}
-Usa esta sección solo si necesitas material complementario.
+\input{chapters/appendices/01-apendices}
 
 \end{document}
