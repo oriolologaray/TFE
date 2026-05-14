@@ -64,35 +64,112 @@ Los requisitos funcionales son aquellos que hacen referencia a las funcionalidad
 
 \section{Diagramas de casos de uso}
 
-En este apartado debéis incluir uno o varios diagramas de casos de uso que representen visualmente las principales interacciones entre los actores y el sistema.
-
-El diagrama debe mostrar los actores definidos previamente y las acciones principales que pueden realizar dentro de la herramienta. No debe ser excesivamente complejo; su finalidad es facilitar una visión rápida del comportamiento general del sistema.
-
-Debe incluir únicamente los casos de uso relevantes para la aplicación desde el punto de vista del usuario. Los procesos internos que no sean iniciados directamente por el usuario pueden mencionarse en otros apartados si es necesario, pero no deben sobrecargar el diagrama.
-
-Después del diagrama, conviene añadir una breve explicación sobre qué representa y cómo se relaciona con los requisitos funcionales definidos anteriormente.
-
 \section{Descripción de los casos de uso}
 
-En este apartado debéis describir los casos de uso más importanteschatgpt
-representados en el diagrama anterior.
+\subsection*{CU-01: Seleccionar partido}
 
-Para cada caso de uso debe indicarse su objetivo, el actor que lo inicia, las condiciones necesarias para ejecutarlo, el flujo principal de interacción, el resultado esperado y las posibles situaciones alternativas o errores.
+\begin{itemize}
+    \item \textbf{Actor principal:} Usuario de la aplicación.
+    \item \textbf{Precondición:} La aplicación dispone de datos de competiciones, temporadas y partidos cargados desde StatsBomb Open Data.
+    \item \textbf{Disparador:} El usuario quiere analizar un partido concreto.
+    \item \textbf{Escenario principal de éxito:}
+          \begin{enumerate}
+              \item El sistema muestra las competiciones y temporadas disponibles.
+              \item El usuario selecciona una competición y una temporada.
+              \item El sistema muestra los partidos disponibles.
+              \item El usuario selecciona un partido.
+              \item El sistema carga la información general del encuentro y deja preparado el análisis del partido.
+          \end{enumerate}
+\end{itemize}
 
-No es necesario describir con el mismo nivel de detalle todos los casos de uso. Deben priorizarse aquellos que representan el funcionamiento principal de la herramienta y que están más directamente relacionados con los objetivos del proyecto.
+\subsection*{CU-02: Seleccionar minuto o tramo de análisis}
 
-La descripción debe permitir entender cómo utilizaría el usuario la aplicación y cómo responde el sistema ante sus acciones.
+\begin{itemize}
+    \item \textbf{Actor principal:} Usuario de la aplicación.
+    \item \textbf{Precondición:} El usuario ha seleccionado previamente un partido válido.
+    \item \textbf{Disparador:} El usuario quiere analizar el estado del partido en un momento concreto.
+    \item \textbf{Escenario principal de éxito:}
+          \begin{enumerate}
+              \item El sistema muestra un selector temporal del partido.
+              \item El usuario selecciona un minuto o tramo de análisis.
+              \item El sistema identifica los eventos ocurridos hasta ese instante.
+              \item El sistema prepara los datos necesarios para calcular las métricas temporales correspondientes.
+          \end{enumerate}
+\end{itemize}
 
+\subsection*{CU-03: Consultar predicción del resultado}
 
-\section{Diagrama conceptual de datos}
+\begin{itemize}
+    \item \textbf{Actor principal:} Usuario de la aplicación.
+    \item \textbf{Precondición:} Se ha seleccionado un partido y un minuto o tramo temporal de análisis.
+    \item \textbf{Disparador:} El usuario solicita conocer la probabilidad estimada de cada resultado final posible.
+    \item \textbf{Escenario principal de éxito:}
+          \begin{enumerate}
+              \item El sistema genera las métricas acumuladas hasta el instante seleccionado.
+              \item El sistema utiliza dichas métricas como entrada del modelo predictivo.
+              \item El modelo calcula la probabilidad de victoria local, empate y victoria visitante.
+              \item El sistema muestra las probabilidades obtenidas al usuario de forma clara y visual.
+          \end{enumerate}
+\end{itemize}
 
-En este apartado debéis representar la estructura lógica de los datos que utilizará la herramienta.
+\subsection*{CU-04: Visualizar evolución de probabilidades}
 
-El objetivo es mostrar las entidades principales del sistema y las relaciones entre ellas, sin entrar todavía en detalles físicos de implementación o almacenamiento. Deben aparecer las entidades necesarias para entender cómo se pasa desde los datos originales hasta las predicciones mostradas por la aplicación.
+\begin{itemize}
+    \item \textbf{Actor principal:} Usuario de la aplicación.
+    \item \textbf{Precondición:} El partido seleccionado dispone de eventos suficientes para generar métricas temporales.
+    \item \textbf{Disparador:} El usuario quiere observar cómo cambian las probabilidades a lo largo del encuentro.
+    \item \textbf{Escenario principal de éxito:}
+          \begin{enumerate}
+              \item El sistema calcula las predicciones en distintos minutos o tramos temporales del partido.
+              \item El sistema genera la evolución de las probabilidades de victoria local, empate y victoria visitante.
+              \item El sistema muestra un gráfico temporal con dicha evolución.
+              \item El usuario puede identificar cambios relevantes en la predicción durante el partido.
+          \end{enumerate}
+\end{itemize}
 
-El diagrama debe reflejar la relación entre partidos, eventos, métricas temporales, modelo predictivo y predicciones. También debe quedar clara la vinculación entre los datos de partido y los eventos asociados, así como el papel de las métricas temporales como entrada del modelo.
+\subsection*{CU-05: Consultar métricas acumuladas del partido}
 
-Después del diagrama, se debe añadir una breve explicación del flujo de datos, indicando cómo se transforman los datos originales en información útil para la herramienta.
+\begin{itemize}
+    \item \textbf{Actor principal:} Usuario de la aplicación.
+    \item \textbf{Precondición:} El usuario ha seleccionado un partido y un instante temporal de análisis.
+    \item \textbf{Disparador:} El usuario quiere consultar qué información del partido se está utilizando para interpretar la predicción.
+    \item \textbf{Escenario principal de éxito:}
+          \begin{enumerate}
+              \item El sistema procesa los eventos ocurridos hasta el minuto seleccionado.
+              \item El sistema calcula las métricas acumuladas de ambos equipos.
+              \item El sistema muestra información descriptiva como marcador, tiros, xG, faltas, tarjetas, córneres u otras variables relevantes.
+              \item El usuario puede utilizar estas métricas para interpretar mejor la predicción generada.
+          \end{enumerate}
+\end{itemize}
+
+\subsection*{CU-06: Comparar predicción con resultado final}
+
+\begin{itemize}
+    \item \textbf{Actor principal:} Usuario de la aplicación.
+    \item \textbf{Precondición:} El partido seleccionado dispone de resultado final real y el sistema ha generado predicciones para uno o varios momentos del encuentro.
+    \item \textbf{Disparador:} El usuario quiere comprobar si la predicción generada por el sistema es coherente con el resultado final del partido.
+    \item \textbf{Escenario principal de éxito:}
+          \begin{enumerate}
+              \item El sistema obtiene el resultado final real del partido.
+              \item El sistema muestra la predicción generada para el minuto o tramo seleccionado.
+              \item El usuario compara la probabilidad estimada de cada resultado con el desenlace real del encuentro.
+              \item El sistema permite valorar de forma visual si la evolución de las probabilidades se aproxima al resultado final.
+          \end{enumerate}
+\end{itemize}
+
+\subsection*{CU-07: Consultar información básica del modelo}
+
+\begin{itemize}
+    \item \textbf{Actor principal:} Usuario técnico o evaluador.
+    \item \textbf{Precondición:} El modelo predictivo ha sido entrenado e integrado en la herramienta.
+    \item \textbf{Disparador:} El usuario quiere conocer información general sobre el modelo o las variables utilizadas para generar las predicciones.
+    \item \textbf{Escenario principal de éxito:}
+          \begin{enumerate}
+              \item El sistema muestra información básica sobre el modelo predictivo utilizado.
+              \item El sistema muestra las principales variables o métricas consideradas en la predicción.
+              \item El usuario puede interpretar de forma general cómo se generan las probabilidades mostradas por la herramienta.
+          \end{enumerate}
+\end{itemize}
 
 \section{Requisitos no funcionales}
 
