@@ -1,0 +1,185 @@
+\chapter{Identificación de requisitos}
+
+En este capítulo se concretan los requisitos que debe cumplir la herramienta software desarrollada en el proyecto. A partir de los objetivos definidos previamente, se especifica qué tipo de aplicación se va a construir, qué usuarios o interesados se ven implicados, qué funcionalidades debe ofrecer, qué datos maneja y qué condiciones de calidad debe cumplir.
+
+\section{Descripción general de la herramienta propuesta}
+
+En este trabajo se propone desarrollar una aplicación web interactiva orientada a la predicción dinámica del resultado final de partidos de fútbol. Su objetivo principal es permitir al usuario seleccionar un partido histórico, analizar su evolución a lo largo del tiempo y visualizar cómo varían las probabilidades estimadas de victoria local, empate y victoria visitante en función de los eventos ocurridos durante el encuentro.
+
+La aplicación se plantea como una prueba de concepto que integra el modelo predictivo desarrollado en el proyecto dentro de una interfaz usable. De este modo, el trabajo no se limita únicamente al entrenamiento y evaluación de modelos de aprendizaje automático, sino que también busca construir una herramienta que permita consultar los resultados del modelo de forma visual, ordenada y comprensible. La finalidad es que el usuario pueda observar cómo cambia la predicción del resultado final a medida que avanza el partido y se acumula nueva información de juego.
+
+El sistema utilizará como fuente principal los datos de StatsBomb Open Data. En concreto, se emplearán los archivos de partidos para obtener información general del encuentro, como los equipos participantes, la competición, la temporada y el resultado final, y los archivos de eventos para reconstruir la evolución del partido. Estos eventos incluyen acciones como pases, tiros, faltas, tarjetas, córneres, recuperaciones u otras acciones relevantes del juego. A partir de esta información, la herramienta generará métricas temporales acumuladas que representen el estado del partido en un minuto o tramo temporal concreto.
+
+El funcionamiento general de la aplicación será el siguiente. En primer lugar, el usuario seleccionará una competición, una temporada y un partido concreto de entre los datos disponibles. Una vez seleccionado el partido, el sistema cargará los eventos asociados a dicho encuentro y permitirá elegir un minuto o tramo temporal de análisis. A continuación, la herramienta procesará los eventos ocurridos hasta ese instante para generar las variables de entrada necesarias para el modelo predictivo. Con esas variables, el modelo dará una estimación de las probabilidades de cada resultado final posible, que se mostrarán al usuario de forma clara y visual. Además, el sistema permitirá visualizar la evolución de estas probabilidades a lo largo del partido, mostrando cómo determinados eventos pueden modificar la predicción del resultado final. También se incluirá información descriptiva del partido para facilitar la interpretación de las predicciones y su comparación con el resultado real del encuentro.
+
+Es importante destacar que la aplicación no se plantea como un sistema de predicción en tiempo real conectado a una fuente de datos en vivo. El sistema trabajará con partidos históricos ya disputados y simulará la evolución del encuentro utilizando únicamente la información disponible hasta cada instante analizado. Por tanto, su objetivo no es ofrecer predicciones operativas durante partidos en directo, sino demostrar la viabilidad de un enfoque de predicción dinámica intrapartido basado en eventos históricos.
+
+Tampoco se pretende desarrollar una plataforma comercial completa ni un sistema de apuestas. La herramienta se centra en el análisis y visualización de probabilidades desde un punto de vista académico y experimental. Quedan fuera del alcance funcionalidades como la conexión con proveedores de datos en directo, el uso de cuotas de casas de apuestas, la gestión de usuarios, el despliegue comercial o la actualización automática del modelo con nuevos partidos.
+
+En conjunto, la herramienta permitirá conectar el modelo predictivo con una interfaz práctica, donde el usuario podrá seleccionar un partido, analizar su evolución y entender cómo cambian las probabilidades del resultado final a partir de los eventos registrados.
+
+\section{Stakeholders}
+
+Diferentes stakeholders tienen impacto en este proyecto, cada uno con intereses y expectativas específicas respecto a la herramienta desarrollada.
+\begin{itemize}
+    \item \textbf{Desarrolladores del proyecto}: Los miembros del equipo desarrollador del TFE, responsables de diseñar, implementar y evaluar la herramienta. Esperan construir una aplicación funcional que integre el modelo predictivo y cumpla con los objetivos planteados.
+    \item \textbf{Tutor del TFE}: El tutor académico que participa en la orientación y supervisión del proyecto. Tiene interés en que el trabajo sea riguroso, bien documentado y que aporte valor académico.
+    \item \textbf{Usuarios finales}: Personas interesadas en el análisis de partidos de fútbol, como aficionados, analistas deportivos, periodistas o estudiantes. Buscan una herramienta que les permita explorar la evolución de los partidos y entender cómo los eventos afectan las probabilidades de resultado final.
+    \item \textbf{Estudiantes o investigadores}: Investigadores interesados en el análisis de datos deportivos, aprendizaje automático aplicado al deporte o visualización de datos. Pueden beneficiarse del enfoque metodológico y los resultados obtenidos en el proyecto.
+\end{itemize}
+La identificación de estos stakeholders permite orientar los requisitos de la herramienta hacia una solución equilibrada. Por un lado, la aplicación debe ser sencilla y visual para que pueda ser utilizada por usuarios no técnicos. Por otro lado, debe ofrecer suficiente información sobre los datos, las métricas y las predicciones para que pueda ser evaluada de forma rigurosa dentro del contexto académico del proyecto.
+
+
+\section{Requisitos funcionales}
+
+Los requisitos funcionales son aquellos que hacen referencia a las funcionalidades que debe ofrecer el sistema. En este proyecto, estos requisitos describen las acciones que debe permitir la aplicación web para cargar partidos históricos, procesar sus eventos, generar métricas temporales y mostrar las predicciones del resultado final.
+
+\begin{itemize}
+    \item \textbf{RF-01 - Carga de partidos:} La aplicación debe permitir cargar partidos procedentes de StatsBomb Open Data, incluyendo información básica como competición, temporada, equipos participantes, fecha del partido y resultado final.
+
+    \item \textbf{RF-02 - Selección de competición, temporada y partido:} La aplicación debe permitir que el usuario seleccione una competición, una temporada y un partido concreto de entre los datos disponibles para realizar el análisis.
+
+    \item \textbf{RF-03 - Carga de eventos de partidos:} La aplicación debe garantizar que, una vez seleccionado un partido, se carguen correctamente los eventos asociados a dicho encuentro mediante su identificador \texttt{match\_id}.
+
+    \item \textbf{RF-04 - Procesamiento de eventos del partido:} La aplicación debe procesar los eventos del partido seleccionado para extraer la información necesaria sobre las acciones ocurridas durante el encuentro, como pases, tiros, faltas, tarjetas, córneres, recuperaciones y goles.
+
+    \item \textbf{RF-05 - Selección del minuto o tramo de análisis:} La aplicación debe permitir que el usuario seleccione el minuto o tramo temporal del partido sobre el que desea realizar la predicción.
+
+    \item \textbf{RF-06 - Control de información disponible hasta el instante analizado:} La aplicación debe garantizar que, para realizar una predicción en un minuto concreto, solo se utilicen los eventos ocurridos hasta ese instante, evitando el uso de información posterior del partido.
+
+    \item \textbf{RF-07 - Predicción de resultados:} La aplicación debe aplicar el modelo predictivo entrenado para obtener la probabilidad estimada de victoria local, empate y victoria visitante en el minuto o tramo temporal seleccionado.
+
+    \item \textbf{RF-08 - Visualización de la predicción del resultado:} La aplicación debe mostrar al usuario, de forma clara y comprensible, las probabilidades estimadas para cada uno de los tres posibles resultados finales del partido.
+
+    \item \textbf{RF-09 - Visualización de la evolución temporal de las probabilidades:} La aplicación debe permitir visualizar cómo cambian las probabilidades de victoria local, empate y victoria visitante a lo largo del partido.
+
+    \item \textbf{RF-10 - Visualización de métricas descriptivas del partido:} La aplicación debe mostrar métricas acumuladas de ambos equipos hasta el instante seleccionado, con el objetivo de facilitar la interpretación de la predicción generada.
+
+    \item \textbf{RF-11 - Comparación con el resultado final real:} La aplicación debe permitir comparar las predicciones generadas durante el partido con el resultado final real del encuentro.
+
+    \item \textbf{RF-12 - Consulta de información básica del modelo:} La aplicación debe ofrecer información básica sobre el modelo utilizado y las variables consideradas, para que el usuario pueda interpretar mejor el origen de las predicciones.
+
+    \item \textbf{RF-13 - Exportación de resultados:} La aplicación debe permitir exportar los resultados de una simulación, incluyendo el minuto analizado, las métricas generadas y las probabilidades estimadas, en un formato reutilizable.
+\end{itemize}
+
+\section{Diagramas de casos de uso}
+
+En este apartado debéis incluir uno o varios diagramas de casos de uso que representen visualmente las principales interacciones entre los actores y el sistema.
+
+El diagrama debe mostrar los actores definidos previamente y las acciones principales que pueden realizar dentro de la herramienta. No debe ser excesivamente complejo; su finalidad es facilitar una visión rápida del comportamiento general del sistema.
+
+Debe incluir únicamente los casos de uso relevantes para la aplicación desde el punto de vista del usuario. Los procesos internos que no sean iniciados directamente por el usuario pueden mencionarse en otros apartados si es necesario, pero no deben sobrecargar el diagrama.
+
+Después del diagrama, conviene añadir una breve explicación sobre qué representa y cómo se relaciona con los requisitos funcionales definidos anteriormente.
+
+\section{Descripción de los casos de uso}
+
+En este apartado debéis describir los casos de uso más importanteschatgpt
+representados en el diagrama anterior.
+
+Para cada caso de uso debe indicarse su objetivo, el actor que lo inicia, las condiciones necesarias para ejecutarlo, el flujo principal de interacción, el resultado esperado y las posibles situaciones alternativas o errores.
+
+No es necesario describir con el mismo nivel de detalle todos los casos de uso. Deben priorizarse aquellos que representan el funcionamiento principal de la herramienta y que están más directamente relacionados con los objetivos del proyecto.
+
+La descripción debe permitir entender cómo utilizaría el usuario la aplicación y cómo responde el sistema ante sus acciones.
+
+
+\section{Diagrama conceptual de datos}
+
+En este apartado debéis representar la estructura lógica de los datos que utilizará la herramienta.
+
+El objetivo es mostrar las entidades principales del sistema y las relaciones entre ellas, sin entrar todavía en detalles físicos de implementación o almacenamiento. Deben aparecer las entidades necesarias para entender cómo se pasa desde los datos originales hasta las predicciones mostradas por la aplicación.
+
+El diagrama debe reflejar la relación entre partidos, eventos, métricas temporales, modelo predictivo y predicciones. También debe quedar clara la vinculación entre los datos de partido y los eventos asociados, así como el papel de las métricas temporales como entrada del modelo.
+
+Después del diagrama, se debe añadir una breve explicación del flujo de datos, indicando cómo se transforman los datos originales en información útil para la herramienta.
+
+\section{Requisitos no funcionales}
+
+Los requisitos no funcionales definen las propiedades de calidad que debe cumplir la herramienta software. A diferencia de los requisitos funcionales, no describen acciones concretas del sistema, sino condiciones relacionadas con su apariencia, facilidad de uso, rendimiento, fiabilidad, mantenimiento, adaptabilidad, integridad de los datos y cumplimiento de restricciones externas.
+
+Los requisitos no funcionales definidos en este apartado se han seleccionado a partir de la plantilla Volere, tomando únicamente aquellos tipos que resultan relevantes para la herramienta desarrollada en este proyecto. \cite{robertson2006volere}
+
+\textbf{RNF-01 - Requisito de apariencia (10a)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} La herramienta debe presentar una apariencia clara, ordenada y coherente con su finalidad analítica. La interfaz debe priorizar la legibilidad de las probabilidades, métricas y gráficos mostrados.
+    \item \textbf{Justificación del requisito:} La aplicación tiene como objetivo facilitar la interpretación de predicciones y métricas de partido. Por ello, una apariencia confusa o sobrecargada dificultaría el análisis y reduciría la utilidad de la herramienta.
+\end{itemize}
+
+\textbf{RNF-02 - Requisito de facilidad de utilización (11a)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} La herramienta debe permitir que el usuario pueda seleccionar un partido, escoger un minuto o tramo temporal y consultar la predicción sin necesidad de modificar código ni conocer el funcionamiento interno del modelo.
+    \item \textbf{Justificación del requisito:} La aplicación está pensada para usuarios con distintos niveles de conocimiento técnico. Por tanto, debe poder utilizarse de forma sencilla desde la interfaz web, evitando que el uso dependa de procesos manuales complejos.
+\end{itemize}
+
+\textbf{RNF-03 - Requisito de velocidad y latencia (12a)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} El sistema debe generar las predicciones y actualizar las visualizaciones en un tiempo razonable cuando el usuario seleccione un partido o cambie el minuto de análisis.
+    \item \textbf{Justificación del requisito:} La herramienta debe permitir una exploración fluida de la evolución del partido. Si cada consulta genera esperas excesivas, la experiencia de uso se ve afectada y la aplicación pierde valor como sistema interactivo.
+\end{itemize}
+
+\textbf{RNF-04 - Requisito de precisión o exactitud (12c)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} Las métricas calculadas a partir de los eventos y las probabilidades mostradas por el modelo deben ser coherentes, consistentes y estar correctamente asociadas al partido y minuto analizado.
+    \item \textbf{Justificación del requisito:} El sistema basa sus predicciones en variables generadas a partir de eventos. Si estas métricas se calculan de forma incorrecta o se asocian al momento temporal equivocado, las probabilidades obtenidas no serían fiables ni evaluables.
+\end{itemize}
+
+\textbf{RNF-05 - Requisito de fortaleza o tolerancia a fallas (12e)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} La aplicación debe gestionar de forma controlada situaciones anómalas, como ausencia de archivos, partidos sin ciertos tipos de eventos, valores nulos o errores durante la carga de datos.
+    \item \textbf{Justificación del requisito:} Los datos disponibles pueden variar entre competiciones y partidos. La herramienta debe evitar fallos inesperados y ofrecer mensajes comprensibles cuando no sea posible completar una operación.
+\end{itemize}
+
+\textbf{RNF-06 - Requisito de capacidad (12f)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} El sistema debe ser capaz de procesar el volumen de datos necesario para trabajar con los partidos, eventos y métricas temporales incluidos en el alcance del proyecto.
+    \item \textbf{Justificación del requisito:} Cada partido puede contener un número elevado de eventos. La aplicación debe poder gestionar ese volumen de información sin que el procesamiento impida el uso normal de la herramienta.
+\end{itemize}
+
+\textbf{RNF-07 - Requisito de interfaz con sistemas adyacentes (13b)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} La herramienta debe poder interactuar correctamente con los elementos externos necesarios para su funcionamiento, como los archivos de StatsBomb Open Data, el modelo predictivo entrenado y las librerías utilizadas para el procesamiento y visualización.
+    \item \textbf{Justificación del requisito:} El sistema depende de varios componentes externos. Si la conexión entre los datos, el modelo y la interfaz no está bien definida, el funcionamiento de la aplicación puede verse comprometido.
+\end{itemize}
+
+\textbf{RNF-08 - Requisito de producción o instalación (13c)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} La herramienta debe poder instalarse y ejecutarse en un entorno local siguiendo instrucciones documentadas.
+    \item \textbf{Justificación del requisito:} Al tratarse de un proyecto académico, la aplicación debe poder ser revisada y ejecutada por otras personas, como el equipo, el tutor o los evaluadores. Una instalación demasiado compleja dificultaría la validación del sistema.
+\end{itemize}
+
+\textbf{RNF-9 - Requisito de mantenimiento (14a)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} El código debe organizarse de forma modular, separando las partes correspondientes a carga de datos, procesamiento de eventos, generación de métricas, predicción, evaluación y visualización.
+    \item \textbf{Justificación del requisito:} Una estructura modular facilita la corrección de errores, la incorporación de mejoras y la comprensión del proyecto. Esto es especialmente importante en un sistema que combina datos, modelos predictivos e interfaz web.
+\end{itemize}
+
+\textbf{RNF-10 - Requisito de adaptabilidad (14c)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} La aplicación debe poder ejecutarse en un entorno local estándar y ser accesible desde navegadores web habituales, sin depender de una configuración excesivamente específica.
+    \item \textbf{Justificación del requisito:} La herramienta debe poder utilizarse en diferentes equipos durante el desarrollo, la revisión y la evaluación del proyecto. Esto permite que no quede limitada a un único entorno de ejecución.
+\end{itemize}
+
+\textbf{RNF-11 - Requisito de integridad (15b)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} El sistema debe preservar la integridad de los datos utilizados y generados, asegurando que cada predicción se construya con los eventos correspondientes al partido seleccionado y únicamente con información disponible hasta el minuto analizado.
+    \item \textbf{Justificación del requisito:} Este requisito es crítico para evitar errores en el análisis y fuga de información futura. Si se utilizan eventos posteriores al momento de predicción, los resultados del modelo quedarían contaminados y la evaluación no sería válida.
+\end{itemize}
+
+\textbf{RNF-12 - Requisito de cumplimiento y estándares (17a y 17b)}
+
+\begin{itemize}
+    \item \textbf{Descripción:} La herramienta debe utilizar los datos respetando las condiciones de uso de la fuente empleada y citando correctamente su procedencia. Además, el desarrollo debe seguir criterios mínimos de documentación, organización y reproducibilidad.
+    \item \textbf{Justificación del requisito:} El proyecto se basa en StatsBomb Open Data, por lo que es necesario reconocer el origen de los datos y utilizarlos dentro del alcance académico definido. Asimismo, seguir criterios de documentación y organización facilita la revisión y evaluación del trabajo.
+\end{itemize}
