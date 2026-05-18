@@ -1,2 +1,185 @@
 \chapter{Desarrollo}
-Explica la implementación, el análisis o el trabajo experimental.
+
+\section{Preparación de los datos}
+
+\subsection{Obtención de los datos}
+
+Esta sección describe cómo se han obtenido los datos del proyecto. Primero se presenta la fuente de datos utilizada y su estructura, y después se explica el proceso de descarga y construcción del dataset.
+
+\subsubsection{Fuente de datos}
+
+La fuente de datos principal utilizada para la realización de este trabajo es StatsBomb Open Data, un repositorio público disponible en GitHub que proporciona conjuntos de datos e investigaciones para mejorar la comprensión del fútbol.
+
+Los datos de este repositorio están estructurados en tres niveles jerárquicos.
+\begin{itemize}
+    \item \textbf{Competiciones} (\texttt{data/competitions.json}), que contiene el catálogo completo de competiciones y temporadas disponibles. Entre los campos que incluye cada entrada destacan el identificador de la competición (\texttt{competition\_id}), el identificador de la temporada (\texttt{season\_id}), el nombre de la competición, el nombre de la temporada y el género de la competición, entre otros.
+
+    \item \textbf{Partidos} (\texttt{data/matches/\{competition\_id\}/\{season\_id\}.json}), que contiene los metadatos de todos los partidos de una competición y temporada concretas. Entre los campos disponibles en cada entrada destacan el identificador del partido (\texttt{match\_id}), los equipos local y visitante, el marcador final, la fecha, la jornada, el estadio, el árbitro y el estado del partido, entre otros. Solo los partidos con estado \textit{available} tienen fichero de eventos asociado y han sido incluidos en el dataset.
+
+    \item \textbf{Eventos} (\texttt{data/events/\{match\_id\}.json}), que contiene el registro completo de acciones de un partido, ordenadas cronológicamente. Cada acción incluye el tipo de evento, el equipo, el minuto y segundo de juego, la localización en el campo y los atributos específicos del tipo de acción. Es el fichero principal del que se extrae la información para construir el dataset de modelado.
+\end{itemize}
+
+El repositorio también incluye otros ficheros de alineaciones y datos de posicionamiento 360° que no se utilizan en este trabajo ya que no son necesarios para el enfoque planteado. La especificación técnica completa de los campos de cada tipo de fichero está recogida en la carpeta \texttt{doc/} del repositorio, con documentos específicos para competiciones, partidos y eventos.
+
+\subsubsection{Proceso de descarga y construcción del dataset}
+
+El dataset utilizado para este proyecto se ha construido utilizando un script de Python que automatiza la descarga y el almacenamiento de los datos del repositorio StatsBomb Open Data.
+
+El primer paso para generar este dataset consiste en descargar el catálogo de competiciones y para competición se descarga el fichero de partidos disponibles. Por cada partido, se obtiene el fichero de eventos correspondiente y se itera sobre cada acción registrada. Para cada evento se extrae un conjunto de campos comunes y unos campos específicos según el tipo de acción. Cada acción pertenece a una fila del dataset. Al ejecutar este script, se obtiene un fichero csv con todos los eventos de cada partido disponible. La columna \texttt{final\_result}, derivada del marcador final de cada partido, actúa como etiqueta de clasificación y toma los valores \texttt{home\_win}, \texttt{draw} o \texttt{away\_win} según si el equipo local ganó, empató o perdió.
+
+Dado que el proceso implica miles de peticiones a un servidor externo, se han tomado algunas medidas para hacerlo más resistente a fallos de red. Ante un error de descarga, el script reintenta la petición hasta tres veces con pausas progresivas de 5, 10 y 15 segundos antes de registrar el fallo. Para evitar perder el trabajo acumulado en caso de un error tardío, el dataset se guarda de forma parcial al terminar cada competición. Por último, se ha implementado una función de verificación que cruza los partidos del dataset con los disponibles en el repositorio y genera automáticamente el comando necesario para recuperar cualquier partido que falte.
+
+\subsection{Comprensión y análisis de los datos}
+
+\subsubsection{Estructura del dataset}
+
+El dataset resultante es un fichero tabular con 12.188.949 filas y 28 columnas, donde cada fila representa un evento individual registrado durante un partido. El conjunto abarca 3.464 partidos de 21 competiciones distintas, que incluyen ligas masculinas de élite, competiciones femeninas y torneos internacionales.
+
+La densidad de eventos es consistente entre partidos, con una media de 3.519 eventos por partido, un mínimo de 2.101 y un máximo de 5.190. Esta regularidad indica que no existen partidos con registros incompletos o truncados que pudieran introducir ruido en las métricas acumuladas.
+
+\subsubsection{Tipos de evento}
+
+El dataset contiene 33 tipos de evento con una distribución muy desigual. Los tres más frecuentes (\textit{Pass}, \textit{Ball Receipt} y \textit{Carry}) acumulan el 75\% del total y corresponden a acciones de seguimiento de posesión. En el extremo opuesto, los tiros (\textit{Shot}) suponen solo el 0,7\%, pero concentran la información más predictiva, ya que son los únicos eventos con \textit{expected goals} (xG) asociado. La tabla~\ref{tab:event_types} recoge la distribución de los diez tipos más frecuentes.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lrr}
+        \hline
+        \textbf{Tipo de evento} & \textbf{Eventos} & \textbf{\% del total} \\
+        \hline
+        Pass                    & 3.387.760        & 27,8\%                \\
+        Ball Receipt*           & 3.167.310        & 26,0\%                \\
+        Carry                   & 2.632.570        & 21,6\%                \\
+        Pressure                & 1.113.859        & 9,1\%                 \\
+        Ball Recovery           & 366.673          & 3,0\%                 \\
+        Duel                    & 257.861          & 2,1\%                 \\
+        Clearance               & 158.993          & 1,3\%                 \\
+        Block                   & 132.352          & 1,1\%                 \\
+        Dribble                 & 122.047          & 1,0\%                 \\
+        Shot                    & 88.023           & 0,7\%                 \\
+        \hline
+        \multicolumn{3}{l}{\small Fuente: elaboración propia a partir de StatsBomb Open Data.}
+    \end{tabular}
+    \caption{Frecuencia de los principales tipos de evento en el dataset}
+    \label{tab:event_types}
+\end{table}
+
+\subsubsection{Balance de clases}
+
+La variable objetivo del problema es el resultado final del partido, que puede tomar tres valores, victoria local (\texttt{home\_win}), empate (\texttt{draw}) y victoria visitante (\texttt{away\_win}). Su distribución sobre los 3.464 partidos del dataset revela un desequilibrio moderado entre clases.
+
+La clase mayoritaria es la victoria local, con 1.565 partidos (45,2\%), seguida de la victoria visitante con 1.102 (31,8\%) y el empate con 797 (23,0\%). El ratio entre la clase más frecuente y la menos frecuente es de 1,96, lo que indica que la clase mayoritaria casi dobla a la minoritaria.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{assets/figuras/eda/balance_clases.pdf}
+    \caption{Distribución de la variable objetivo en el dataset}
+    \label{fig:balance_clases}
+\end{figure}
+
+El desequilibrio tiene dos implicaciones directas para el modelado. Un clasificador que predijera siempre \texttt{home\_win} obtendría una precisión del 45,2\% sin aprender ningún patrón, por lo que el \textit{accuracy} por sí solo no es una métrica válida y se usarán F1-score macro y ponderado en su lugar. Además, se aplicará \texttt{class\_weight='balanced'} en los clasificadores que lo soporten para penalizar más los errores en las clases minoritarias.
+
+El análisis por separado de las competiciones femeninas y masculinas muestra diferencias relevantes. En las masculinas (2.924 partidos) la distribución es 44,8\% victorias locales, 31,0\% visitantes y 24,2\% empates. En las femeninas (540 partidos) los empates caen al 16,7\% y las victorias visitantes suben al 36,1\%. Esta diferencia justifica incluir una variable binaria que identifique el tipo de competición en el dataset de modelado.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{assets/figuras/eda/balance_genero.pdf}
+    \caption{Distribución de resultados por género de competición}
+    \label{fig:balance_genero}
+\end{figure}
+
+\subsubsection{Análisis temporal}
+
+El modelo predice el resultado a partir del estado acumulado del partido hasta un minuto determinado. Antes de construir ese dataset de modelado, conviene verificar que los datos registran la evolución del partido de forma homogénea y decidir cómo tratar los eventos que quedan fuera de los 90 minutos reglamentarios.
+
+Al observar la distribución del minuto de cada evento se aprecia un comportamiento que encaja con lo que ocurre en un partido real. Los picos de actividad se producen al inicio de cada parte, en los minutos 1 y 46, cuando se realizan los saques de centro, y a partir de ahí la densidad de eventos se mantiene estable hasta el final del tiempo reglamentario. No hay ningún periodo del partido con un volumen de eventos anómalamente bajo o alto.
+
+Lo que sí requiere una decisión explícita es qué hacer con los eventos registrados pasado el minuto 90. El dataset incluye partidos con prórroga, ya que el minuto máximo registrado es el 139, y prácticamente todos los partidos tienen al menos algún evento fuera de los 90 minutos reglamentarios. Dado que el tiempo de descuento varía según las interrupciones de cada partido y la prórroga no tiene duración fija, mantener esos eventos complicaría la construcción del dataset sin aportar una mejora clara. Por ello se opta por truncar al minuto 90, lo que afecta al 3,2\% de los eventos y deja una base temporal homogénea para todos los partidos.
+
+Respecto a los goles, la segunda parte acumula algo más de la mitad del total, 4.978 de 9.150, frente a los 4.172 de la primera. El minuto 47, el primero tras el descanso, es el de mayor densidad de goles de todo el dataset. Este comportamiento confirma que el momento del partido en el que se está haciendo la predicción aporta información relevante al modelo. La tabla~\ref{tab:temporal} recoge los principales indicadores del análisis.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lr}
+        \hline
+        \textbf{Indicador}                                     & \textbf{Valor} \\
+        \hline
+        Eventos en tiempo reglamentario ($\leq 90$ min)        & 96,8\%         \\
+        Eventos en tiempo de descuento / prórroga ($> 90$ min) & 3,2\%          \\
+        Partidos con algún evento en minuto $> 90$             & 3.354 de 3.464 \\
+        Minuto máximo registrado                               & 139            \\
+        \hline
+        Goles en primera parte (min.\ 1--45)                   & 4.172 (45,6\%) \\
+        Goles en segunda parte (min.\ 46--90)                  & 4.978 (54,4\%) \\
+        Minuto con más goles                                   & 47 (143 goles) \\
+        \hline
+    \end{tabular}
+    \caption{Principales indicadores del análisis temporal}
+    \label{tab:temporal}
+\end{table}
+
+\subsubsection{xG y features discriminativas}
+
+Para decidir qué variables incluir en el modelo, se ha analizado cuáles de las métricas del partido guardan mayor relación con el resultado. El método utilizado consiste en calcular, para cada partido, la diferencia entre el valor acumulado del equipo local y el del visitante en cada métrica, y medir cuánto se correlaciona esa diferencia con haber ganado o perdido.
+
+El xG es la métrica que mejor separa los resultados, con una correlación de $r = 0{,}568$ entre la diferencia de xG y el resultado del partido. Le siguen los tiros ($r = 0{,}357$) y los pases ($r = 0{,}289$). En los tres casos el patrón es claro, ya que el equipo que acaba ganando acumula más xG, más tiros y más pases que el que pierde. La figura~\ref{fig:correlacion_features} muestra el valor de correlación para cada métrica.
+
+Las presiones y las faltas van en sentido contrario. La diferencia entre el local y el visitante correlaciona negativamente con el resultado ($r = -0{,}223$ y $r = -0{,}199$), lo que significa que el equipo local presiona más y comete más faltas en los partidos que pierde. La explicación es táctica, ya que el equipo que va perdiendo aumenta su intensidad defensiva para intentar recuperar el balón, lo que se traduce en más presiones y más faltas. Estas métricas son útiles para el modelo, pero hay que tener en cuenta que el equipo que más presiona no es el que va ganando, sino el que va perdiendo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{assets/figuras/eda/correlacion_features.pdf}
+    \caption{Correlación de Pearson entre la diferencia de cada métrica acumulada y el resultado del partido}
+    \label{fig:correlacion_features}
+\end{figure}
+
+La tasa de pases completados también varía según el resultado. El equipo ganador completa alrededor de cuatro puntos porcentuales más de sus pases que el perdedor, tanto cuando gana el local (78,6\% frente a 74,0\%) como cuando gana el visitante (77,4\% frente a 74,3\%). Completar más pases es un indicador de control del partido, y el dato confirma que esta métrica aporta información útil al modelo.
+
+Finalmente, conviene remarcar que el 35,3\% de los partidos se decide por un solo gol, lo que hace que muchos encuentros sean difíciles de predecir hasta el final. Además, 231 partidos terminan 0-0, y en esos casos el modelo no dispone de diferencial de goles ni de xG relevante, por lo que tendrá que apoyarse en métricas de posesión y control como los pases, las presiones o los duelos.
+
+\subsubsection{Marcador en curso}
+
+Entre todas las variables que se pueden construir a partir del dataset, el marcador en el minuto $t$ es la más predictiva para un modelo de probabilidad de victoria. Si un equipo gana por dos goles en el minuto 80, la probabilidad de que mantenga el resultado es muy alta independientemente de cualquier otra métrica. Sin embargo, el marcador en curso no existe como campo en el dataset, ya que los datos de StatsBomb registran eventos individuales, no el estado acumulado del partido.
+
+El marcador puede derivarse acumulando los eventos de tipo \textit{Shot} cuyo \texttt{shot\_outcome} sea \texttt{Goal}, ordenados por minuto. Para cada minuto del partido se cuenta cuántos goles ha marcado cada equipo hasta ese momento, lo que produce una curva escalonada que refleja la evolución del marcador a lo largo del encuentro. La figura~\ref{fig:marcador_en_curso} muestra esta evolución para un partido de ejemplo, junto con la diferencia de goles en cada minuto.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/eda/marcador_en_curso.pdf}
+    \caption{Evolución del marcador en curso y diferencia de goles para un partido de ejemplo}
+    \label{fig:marcador_en_curso}
+\end{figure}
+
+Este análisis confirma que la derivación es viable para todos los partidos del dataset y que los goles están correctamente registrados como eventos \textit{Shot} con resultado \texttt{Goal}. El marcador en curso será una de las variables construidas en la fase de preparación de datos.
+
+\subsubsection{Calidad de los datos}
+
+El análisis de valores ausentes refleja una estructura dispersa habitual en datasets de eventos deportivos, donde cada columna solo tiene valores para el subconjunto de filas correspondiente a su tipo de evento. La columna \texttt{xg} presenta un 99,28\% de nulos porque únicamente se registra en tiros; \texttt{pass\_length} y \texttt{pass\_angle} tienen un 72,21\% de nulos al aplicar solo a pases; y \texttt{card\_type} alcanza el 99,88\% al estar reservada para tarjetas. Todos estos nulos son estructuralmente esperables y no representan un problema de calidad.
+
+Los campos clave para el modelado no presentan ningún valor ausente, lo que confirma la integridad del dataset. Entre ellos se encuentran \texttt{match\_id}, \texttt{minute}, \texttt{event\_type}, \texttt{is\_home} y \texttt{final\_result}. Las columnas de localización (\texttt{loc\_x}, \texttt{loc\_y}) muestran un 0,75\% de nulos, correspondientes a eventos administrativos como el inicio de periodo, que no tienen posición en el campo asociada.
+
+\subsubsection{Limitaciones del dataset}
+
+El análisis exploratorio ha permitido identificar las principales limitaciones del dataset, algunas de las cuales ya se han comentado en apartados anteriores junto con las decisiones adoptadas para mitigarlas.
+
+La limitación más relevante que no se ha abordado todavía es el sesgo hacia el fútbol de élite. Todos los partidos del dataset pertenecen a competiciones profesionales de alto nivel, principalmente ligas europeas y torneos internacionales. La Liga española es la más representada, con 868 partidos (el 25,1\% del total), lo que introduce cierta concentración geográfica. Los patrones aprendidos por el modelo pueden no generalizarse bien a ligas de niveles inferiores o con estilos de juego muy distintos. Para el objetivo de este trabajo esto no supone un problema, pero es un factor a tener en cuenta si se quisiera aplicar el modelo fuera del contexto de las competiciones incluidas.
+
+Las demás limitaciones ya han sido tratadas a lo largo del análisis. La diferencia entre el fútbol femenino y masculino se aborda incluyendo una variable binaria en el dataset de modelado (apartado de balance de clases). La ausencia del marcador en tiempo real se resuelve derivándolo a partir de los eventos de tipo \textit{Shot} con resultado \texttt{Goal} (apartado de marcador en curso). El truncado al minuto 90 elimina el 3,2\% de los eventos y deja fuera los partidos con prórroga, lo que introduce cierto ruido en la variable objetivo para ese subconjunto (apartado de análisis temporal). Por último, la estructura dispersa del dataset requiere una transformación en métricas acumuladas antes del modelado, tal y como se describe en el apartado de calidad de los datos.
+
+\subsection{Preparación del dataset de modelado}
+
+\section{Modelado y comparativa}
+
+\subsection{Planteamiento de la comparativa}
+
+\subsection{Modelos seleccionados}
+
+\subsection{Ajuste de hiperparámetros}
+
+\subsection{Resultados comparativos}
+
+\section{Evaluación y despliegue}
+
+\subsection{Evaluación del modelo final}
+
+\subsection{Despliegue}
