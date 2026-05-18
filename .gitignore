@@ -14,7 +14,10 @@
 *.toc
 debug.log
 !assets/logo_unir.pdf
+!assets/figuras/**
 build/
 
 .vscode/*
 !.vscode/settings.json
+
+datasets/statsbomb_events.csv
