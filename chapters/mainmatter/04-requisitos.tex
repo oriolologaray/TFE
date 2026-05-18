@@ -64,6 +64,17 @@ Los requisitos funcionales son aquellos que hacen referencia a las funcionalidad
 
 \section{Diagramas de casos de uso}
 
+Los casos de uso del sistema incluyen todas aquellas acciones que realizan los usuarios dentro del sistema. La especificación de casos de uso permite identificar y organizar de manera clara los requisitos funcionales del sistema a desarrollar.
+
+A continuación se muestra el diagrama de casos de uso que incluye todas aquellas funcionalidades que el usuario puede realizar dentro de la aplicación.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{assets/casos_uso.pdf}
+    \caption{Diagrama de casos de uso de la herramienta propuesta.}
+    \label{fig:diagrama_casos_uso}
+\end{figure}
+
 \section{Descripción de los casos de uso}
 
 \subsection*{CU-01: Seleccionar partido}
@@ -97,7 +108,7 @@ Los requisitos funcionales son aquellos que hacen referencia a las funcionalidad
           \end{enumerate}
 \end{itemize}
 
-\subsection*{CU-03: Consultar predicción del resultado}
+\subsection*{CU-03: Predecir resultado}
 
 \begin{itemize}
     \item \textbf{Actor principal:} Usuario de la aplicación.
@@ -157,10 +168,10 @@ Los requisitos funcionales son aquellos que hacen referencia a las funcionalidad
           \end{enumerate}
 \end{itemize}
 
-\subsection*{CU-07: Consultar información básica del modelo}
+\subsection*{CU-07: Consultar información del modelo}
 
 \begin{itemize}
-    \item \textbf{Actor principal:} Usuario técnico o evaluador.
+    \item \textbf{Actor principal:} Usuario evaluador (usuario normal de la aplicación con interés en conocer el funcionamiento del modelo).
     \item \textbf{Precondición:} El modelo predictivo ha sido entrenado e integrado en la herramienta.
     \item \textbf{Disparador:} El usuario quiere conocer información general sobre el modelo o las variables utilizadas para generar las predicciones.
     \item \textbf{Escenario principal de éxito:}
