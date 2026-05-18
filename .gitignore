@@ -15,6 +15,7 @@
 debug.log
 !assets/logo_unir.pdf
 !assets/figuras/**
+!assets/casos_uso.pdf
 build/
 
 .vscode/*
