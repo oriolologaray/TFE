@@ -1,17 +1,71 @@
-# TFE LaTeX Project
+# TFE — Predicción de resultados de fútbol mediante Machine Learning
 
-This repository contains the LaTeX source for a UNIR TFE document. The project is configured to be edited in VS Code and built with `latexmk`, with generated files written to `build/`.
+Trabajo Fin de Estudios (UNIR, Máster en Inteligencia Artificial).
+Autores: Arnau Armengol Sayavera, Laura Chavarria Solé, Oriol Ologaray Arasa.
+
+Este repositorio contiene tanto la memoria en LaTeX como el código Python del proyecto de predicción de resultados de partidos de fútbol.
 
 ## Repository structure
 
-- `main.tex`: main LaTeX entrypoint
-- `styles/estilo_unir-1.sty`: shared style definitions
-- `references/bibliografia.bib`: bibliography database
-- `assets/logo_unir.pdf`: UNIR logo used by the cover page
-- `.vscode/settings.json`: shared VS Code build and formatting settings
-- `build/`: generated output directory
+```
+├── main.tex                  # LaTeX entrypoint de la memoria
+├── CLAUDE.md                 # Contexto del proyecto para Claude Code
+├── chapters/                 # Capítulos LaTeX
+├── assets/                   # Figuras, logo y otros recursos estáticos
+├── styles/                   # Estilos LaTeX compartidos
+├── references/               # Bibliografía (.bib)
+├── datasets/
+│   └── statsbomb_events.csv.gz   # Dataset principal (versionado via Git LFS, ~190 MB)
+├── notebooks/
+│   ├── eda.ipynb                 # Fase 2 CRISP-DM: análisis exploratorio
+│   └── feature_engineering.ipynb # Fase 3 CRISP-DM: construcción del dataset de modelado
+├── requirements.txt          # Dependencias Python
+└── build/                    # Output LaTeX generado (ignorado en git)
+```
 
-## Working environment
+---
+
+## Python — Setup
+
+### Requisitos previos
+
+- Python 3.11 o superior
+- **Git LFS** — requerido para descargar el dataset del repositorio.
+  Instalar desde [git-lfs.com](https://git-lfs.com) y ejecutar una vez:
+  ```bash
+  git lfs install
+  ```
+  El dataset (`datasets/statsbomb_events.csv.gz`, ~190 MB) se descargará automáticamente al hacer `git clone`.
+
+### 1. Crear entorno virtual e instalar dependencias
+
+```bash
+python -m venv .venv
+
+# macOS / Linux
+source .venv/bin/activate
+# Windows
+.venv\Scripts\activate
+
+pip install -r requirements.txt
+
+# Register the venv as a Jupyter kernel (once, after creating the venv)
+python -m ipykernel install --user --name tfe --display-name "TFE (.venv)"
+```
+
+### 2. Orden de ejecución de notebooks
+
+| Paso | Notebook | Descripción | Output |
+|---|---|---|---|
+| 1 | `notebooks/eda.ipynb` | Análisis exploratorio (Fase 2 CRISP-DM) | Figuras en `assets/figuras/eda/` |
+| 2 | `notebooks/feature_engineering.ipynb` | Dataset de modelado (Fase 3 CRISP-DM) | `datasets/match_minute_features.csv` |
+| 3 | `notebooks/modeling.ipynb` | Entrenamiento y comparativa (Fase 4) | *(pendiente)* |
+
+Abrir con VS Code (extensión Jupyter, kernel `.venv`) o con `jupyter notebook` desde la raíz del proyecto.
+
+---
+
+## LaTeX — Working environment
 
 The repository is set up for this toolchain:
 
