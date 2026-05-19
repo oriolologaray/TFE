@@ -168,15 +168,201 @@ Las demás limitaciones ya han sido tratadas a lo largo del análisis. La difere
 
 \subsection{Preparación del dataset de modelado}
 
+El objetivo de esta fase es transformar el dataset de eventos obtenido en el apartado anterior en un conjunto de datos directamente utilizable por los algoritmos de aprendizaje automático. El dataset original contiene una fila por cada acción registrada en los partidos, por lo que debemos convertirlo a un formato que permita representar el estado de cada partido en un minuto determinado. Para ello, se genera una fila por cada par \textit{(partido, minuto)}, de modo que para cada uno de los 3.464 partidos del dataset se generan noventa filas, una por cada minuto del tiempo reglamentario.  La granularidad de un minuto nos permite determinar con mayor precisión a partir de qué instantes del partido el modelo es capaz de predecir el resultado del encuentro, y permite agregar los valores para construir variables de ventana deslizante. El resultado es un dataset de 311.760 registros y 48 variables de entrada.
+
+\subsubsection{Tratamiento del tiempo reglamentario y el tiempo de descuento}
+
+Como se ha visto en el capítulo anterior, el dataset de eventos incluye acciones correspondientes al tiempo reglamentario, al tiempo de descuento y, en los partidos con prórroga, a los periodos adicionales. Para la construcción del dataset de modelado se adoptan las siguientes decisiones:
+
+\begin{itemize}
+    \item \textbf{Prórroga y penaltis (periodos 3 a 5):} se excluyen de las variables de entrada. La duración de la prórroga no es fija entre partidos ni entre competiciones, y su estructura difiere del tiempo reglamentario, lo que exigiría un tratamiento diferenciado que añadiría complejidad sin beneficio claro para el objetivo del trabajo. La variable objetivo (\texttt{final\_result}) sí refleja el resultado definitivo del partido, incluido el desenlace en prórroga o penaltis cuando corresponda, de modo que la información sobre el resultado final se preserva íntegramente.
+
+    \item \textbf{Tiempo de descuento (minuto $> 90$, periodo 2):} los eventos registrados en tiempo de descuento representan el 3,2\% del total, tal como se constató en el análisis exploratorio. Dado que el tiempo de descuento varía en función de las interrupciones de cada partido y no tiene una duración homogénea entre encuentros, estos eventos se reasignan al \textit{snapshot} del minuto 90, integrándolos en el estado acumulado de ese minuto. Esta decisión garantiza que cualquier gol marcado en el descuento quede recogido en el estado final del partido sin necesidad de modelar minutos variables más allá de los 90 reglamentarios.
+\end{itemize}
+
+\subsubsection{Indicadores de actividad y estado acumulado}
+
+A partir del dataset filtrado se definen 15 indicadores binarios y la variable de \textit{expected goals} (\textit{xG}). Cada tipo de evento del dataset se convierte en un vector binario, de modo que podamos representar el total de acciones de esa clase realizadas por un equipo desde el inicio del partido hasta un minuto $t$.
+
+Los indicadores definidos son: gol, tiro, tiro a puerta, tiro en el área, pase, pase completado, presión defensiva, duelo ganado, despeje, bloqueo, conducción de balón, tarjeta amarilla, tarjeta roja, y entrada en el tercio de ataque. El \textit{xG} se trata como variable continua y toma el valor 0 para todos los eventos que no corresponden a un tiro.
+
+El estado acumulado de las variables se calcula aplicando una suma acumulativa sobre los eventos ordenados por minuto dentro de cada grupo \textit{(partido, equipo)}. Para rellenar los minutos en los que no se registra ningún evento, se usarán los valores anteriores mediante propagación hacia adelante (\textit{forward fill}), lo que equivale a mantener el estado del partido sin cambios hasta que se produzca una nueva acción. Los minutos anteriores al primer evento del partido se inicializan a cero.
+
+\subsubsection{Variables de ventana deslizante}
+
+Las variables acumuladas desde el inicio del partido capturan el estado global del encuentro, pero no distinguen si una acción tuvo lugar en el minuto 5 o en el 85. Para medir la intensidad de juego reciente e incorporar una dimensión de \textit{momentum}, se calculan tres variables de ventana deslizante de 15 minutos: el \textit{xG} generado en los últimos 15 minutos (\texttt{xg\_last15}), el número de tiros en ese mismo intervalo (\texttt{shots\_last15}) y el número de presiones defensivas (\texttt{pressures\_last15}). Estas variables se obtienen eficientemente como la diferencia entre el valor acumulado en el minuto $t$ y el valor acumulado en el minuto $t - 15$, que se extrae desplazando la serie temporal 15 posiciones hacia adelante dentro de cada grupo \textit{(partido, equipo)}.
+
+La selección de \textit{xG}, tiros y presiones para las variables de ventana responde a los resultados del análisis exploratorio, donde estas métricas presentaron las mayores correlaciones con el resultado final. Extender la ventana al conjunto completo de indicadores añadiría 30 variables con un coste computacional significativo y una contribución marginal previsiblemente reducida, dado que las tres seleccionadas cubren las dimensiones ofensiva (\textit{xG} y tiros) y defensiva (presiones) del juego reciente.
+
+\subsubsection{Variables derivadas y \textit{feature engineering}}
+
+Una vez disponibles las estadísticas acumuladas y las variables de ventana para ambos equipos, se construye la representación definitiva del estado del partido, representando ambos equipos en una única fila por \textit{(partido, minuto)}, duplicando las columnas y añadiendo sufijos \texttt{\_home} y \texttt{\_away} que permitan representar el equipo al que corresponden. Además, se generan unas variables o \textit{features} que, aunque no aportan nueva información, permiten transformar la semántica de las variables y su efecto en la calibración de los modelos. Las variables derivadas construidas son las siguientes:
+
+\begin{itemize}
+    \item \textbf{Diferenciales del marcador} (\texttt{score\_diff}, \texttt{xg\_diff}, \texttt{shots\_diff}): diferencia entre el valor del equipo local y el del visitante para los goles, el \textit{xG} acumulado y el número de tiros. Sintetizan en un único valor la ventaja o desventaja relativa de cada equipo en cada dimensión, evitando que el modelo tenga que aprender implícitamente esta operación de resta.
+
+    \item \textbf{Posesión del balón} (\texttt{possession\_home}): proporción de conducciones de balón realizadas por el equipo local sobre el total de conducciones del partido. StatsBomb no proporciona una métrica directa de posesión, y las conducciones (\textit{carries}), que registran el desplazamiento físico del balón por parte de un jugador, constituyen la aproximación más precisa disponible en el dataset. En los minutos previos al primer evento registrado se asigna un valor de 0,5 como posesión neutra.
+
+    \item \textbf{Tasa de pase completado} (\texttt{pass\_completion\_home}, \texttt{pass\_completion\_away}): cociente entre los pases completados y los pases intentados para cada equipo. Captura la calidad y el control en la circulación del balón, que el análisis exploratorio confirmó que correlaciona positivamente con la victoria, con una diferencia de aproximadamente cuatro puntos porcentuales entre equipos ganadores y perdedores.
+
+    \item \textbf{Total de goles} (\texttt{total\_goals}): suma de los goles marcados por ambos equipos hasta el minuto $t$. Un partido con marcador 3-3 presenta un perfil dinámico muy distinto a uno con 0-0, aun cuando \texttt{score\_diff} sea cero en ambos casos. Esta variable permite al modelo distinguir entre partidos abiertos, con muchos goles y mayor probabilidad de nuevas anotaciones, y partidos cerrados de carácter más defensivo.
+
+    \item \textbf{Calidad ofensiva por tiro} (\texttt{xg\_per\_shot\_home}, \texttt{xg\_per\_shot\_away}): cociente entre el \textit{xG} acumulado y el número de tiros realizados. Diferencia entre equipos que generan ocasiones de alta peligrosidad, principalmente desde dentro del área, y aquellos con un volumen elevado de tiros de escasa probabilidad de gol. En los minutos anteriores al primer tiro del equipo se asigna el valor cero.
+
+    \item \textbf{Sobrerendimiento respecto al xG} (\texttt{goals\_minus\_xg\_home}, \texttt{goals\_minus\_xg\_away}): diferencia entre los goles marcados y el \textit{xG} acumulado. Un valor positivo indica que el equipo está materializando más goles de los que cabría esperar a partir de la calidad de sus ocasiones, lo que puede responder tanto a una finalización de alta efectividad como a factores de varianza aleatoria. Un valor negativo refleja la situación contraria, señalando que el equipo está creando peligro sin traducirlo en goles.
+
+    \item \textbf{Tipo de competición} (\texttt{is\_womens}): indicador binario que distingue las competiciones femeninas de las masculinas. El análisis exploratorio reveló diferencias sistemáticas en la distribución de resultados entre ambos contextos: los empates representan el 16,7\,\% de los partidos femeninos frente al 24,2\,\% en los masculinos, y las victorias visitantes alcanzan el 36,1\,\% en el fútbol femenino frente al 31,0\,\% en el masculino. Estas diferencias justifican incluir esta variable para que el modelo pueda calibrar sus probabilidades en función del tipo de competición.
+\end{itemize}
+
+\subsubsection{Composición final del dataset de modelado}
+
+El dataset resultante contiene 311.760 filas, correspondientes a los 3.464 partidos del conjunto de datos y sus 90 minutos reglamentarios, y 48 variables de entrada agrupadas en ocho categorías. La tabla~\ref{tab:features} resume la composición del dataset. La integridad del conjunto fue verificada mediante tres comprobaciones: ausencia de valores ausentes en las columnas clave para el modelado, coincidencia entre el marcador derivado y el marcador real de un partido de muestra seleccionado aleatoriamente, y correspondencia exacta entre el número de filas generadas y el producto del número de partidos por el número de minutos.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcp{7.5cm}}
+        \hline
+        \textbf{Categoría}           & \textbf{Variables} & \textbf{Descripción}                                                                                                                                                                                                                                     \\
+        \hline
+        Estadísticas acumuladas      & 28                 & Goles, tiros, tiros a puerta, tiros en el área, pases, presiones, duelos ganados, despejes, bloqueos, conducciones, tarjetas amarillas, tarjetas rojas, entradas en el tercio de ataque y \textit{xG}; para el equipo local y el visitante por separado. \\[4pt]
+        Ventana deslizante (15\,min) & 6                  & \textit{xG}, tiros y presiones en los últimos 15 minutos; para el equipo local y el visitante.                                                                                                                                                           \\[4pt]
+        Diferenciales                & 3                  & Diferencia local-visitante de goles (\texttt{score\_diff}), \textit{xG} (\texttt{xg\_diff}) y tiros (\texttt{shots\_diff}).                                                                                                                              \\[4pt]
+        Control y posesión           & 4                  & Posesión del local, tasa de pase completado de ambos equipos y total de goles.                                                                                                                                                                           \\[4pt]
+        Calidad ofensiva             & 4                  & \textit{xG} por tiro y sobrerendimiento respecto al \textit{xG}; para ambos equipos.                                                                                                                                                                     \\[4pt]
+        Superioridad numérica        & 1                  & Diferencial de jugadores en campo (\texttt{players\_diff}).                                                                                                                                                                                              \\[4pt]
+        Tiempo restante              & 1                  & Minutos restantes hasta el final del tiempo reglamentario.                                                                                                                                                                                               \\[4pt]
+        Tipo de competición          & 1                  & Indicador binario de competición femenina (\texttt{is\_womens}).                                                                                                                                                                                         \\
+        \hline
+        \textbf{Total}               & \textbf{48}        &                                                                                                                                                                                                                                                          \\
+        \hline
+        \multicolumn{3}{l}{\small Fuente: elaboración propia.}
+    \end{tabular}
+    \caption{Categorías de variables del dataset de modelado}
+    \label{tab:features}
+\end{table}
 \section{Modelado y comparativa}
 
 \subsection{Planteamiento de la comparativa}
 
+Los modelos se evalúan sobre el conjunto de test formado por las temporadas 2020-2025, con 692 partidos y 62.280 filas. Las tres métricas principales son el \textit{accuracy} global, el F1-score macro y la pérdida logarítmica (\textit{log-loss}). El F1-score macro promedia el F1 de las tres clases con el mismo peso, lo que penaliza por igual los errores en las clases minoritarias. La pérdida logarítmica evalúa la calidad de las probabilidades predichas, no solo la clase asignada.
+
+Adicionalmente, se calcula el \textit{accuracy} en seis instantes del partido: los minutos 15, 30, 45, 60, 75 y 90. Este análisis temporal permite cuantificar a partir de qué momento el modelo supera el umbral de referencia del 70\,\% y cómo evoluciona la confianza de la predicción conforme avanza el encuentro.
+
+La línea base del problema es predecir siempre la clase mayoritaria (victoria local), con un 45,2\,\% de \textit{accuracy}. Cualquier modelo útil debe superar este valor de forma sustancial.
+
 \subsection{Modelos seleccionados}
+
+Se entrenan y comparan dos clasificadores: Random Forest y XGBoost.
+
+\textbf{Random Forest} construye un conjunto de árboles de decisión sobre submuestras aleatorias del dataset y combina sus predicciones por votación mayoritaria. No requiere normalización de variables, gestiona bien las interacciones entre variables sin configuración adicional y permite interpretar el modelo mediante la importancia de cada variable. Se utiliza como modelo de referencia.
+
+\textbf{XGBoost} es un método de potenciación del gradiente que construye los árboles de forma secuencial. Cada árbol corrige los errores del árbol anterior minimizando una función de pérdida regularizada. En clasificación sobre datos tabulares estructurados, este método suele superar al Random Forest gracias a su mayor capacidad de ajuste y a la regularización incorporada. Es el modelo principal del trabajo.
+
+Se consideró también el uso de una red neuronal recurrente (LSTM) para aprovechar la naturaleza secuencial de las series minuto a minuto, pero fue descartada por la complejidad adicional de diseño y validación que implicaría.
 
 \subsection{Ajuste de hiperparámetros}
 
+El Random Forest se configura con 300 árboles y pesos de clase balanceados (\texttt{class\_weight='balanced'}), que asignan mayor penalización a los errores en las clases minoritarias. No se realiza búsqueda sistemática de hiperparámetros para este modelo, que actúa como referencia estable.
+
+XGBoost se configura con 300 estimadores, profundidad máxima 6, tasa de aprendizaje 0,1 y tasas de submuestreo de 0,8 por fila y por columna. El desequilibrio de clases se gestiona asignando a cada muestra de entrenamiento un peso inversamente proporcional a la frecuencia de su clase, calculado con la estrategia \texttt{balanced} de scikit-learn. Al igual que con el Random Forest, no se realiza una búsqueda sistemática de hiperparámetros en esta fase.
+
 \subsection{Resultados comparativos}
+
+\subsubsection{Random Forest}
+
+El Random Forest obtiene un \textit{accuracy} global del 66,0\,\%, un F1-score macro del 59,2\,\% y una pérdida logarítmica de 0,769 sobre el conjunto de test. La tabla~\ref{tab:resultados_rf} recoge el \textit{accuracy} y el F1-score macro para los seis puntos de corte evaluados.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{rcc}
+        \hline
+        \textbf{Minuto} & \textbf{Accuracy} & \textbf{Macro-F1} \\
+        \hline
+        15              & 55,6\%            & 44,4\%            \\
+        30              & 60,0\%            & 48,0\%            \\
+        45              & 64,2\%            & 54,4\%            \\
+        60              & 71,0\%            & 64,9\%            \\
+        75              & 76,7\%            & 73,3\%            \\
+        90              & 91,3\%            & 90,4\%            \\
+        \hline
+        \multicolumn{3}{l}{\small Fuente: elaboración propia.}
+    \end{tabular}
+    \caption{\textit{Accuracy} y Macro-F1 del Random Forest por minuto de partido}
+    \label{tab:resultados_rf}
+\end{table}
+
+El modelo supera el 70\,\% de \textit{accuracy} en el minuto 60. Con la mitad del partido disputado, el modelo predice correctamente el resultado final en siete de cada diez partidos. La figura~\ref{fig:accuracy_rf} muestra la evolución por minuto y la figura~\ref{fig:confusion_rf} la matriz de confusión normalizada.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{assets/figuras/modeling/accuracy_por_minuto_rf.pdf}
+    \caption{Evolución del \textit{accuracy} y el Macro-F1 por minuto de partido para el Random Forest}
+    \label{fig:accuracy_rf}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{assets/figuras/modeling/confusion_rf.pdf}
+    \caption{Matriz de confusión normalizada del Random Forest sobre el conjunto de test}
+    \label{fig:confusion_rf}
+\end{figure}
+
+La clase con menor rendimiento es el empate, con un F1 del 33\,\%, frente al 75\,\% de la victoria local y el 70\,\% de la victoria visitante. El empate es difícil de anticipar, ya que pequeñas variaciones en los últimos minutos pueden convertirlo en victoria para cualquiera de los dos equipos. El análisis de importancia de variables (figura~\ref{fig:importancia_rf}) confirma que \texttt{score\_diff}, el \textit{xG} acumulado y \texttt{minutes\_remaining} son las variables más determinantes, junto con las métricas de tiro recientes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{assets/figuras/modeling/feature_importance_rf.pdf}
+    \caption{Importancia de las 20 variables más relevantes en el Random Forest}
+    \label{fig:importancia_rf}
+\end{figure}
+
+\subsubsection{XGBoost}
+
+El XGBoost obtiene un \textit{accuracy} global del 64,8\,\%, un F1-score macro del 61,3\,\% y una pérdida logarítmica de 0,774 sobre el conjunto de test. La tabla~\ref{tab:resultados_xgb} recoge el \textit{accuracy} y el F1-score macro por minuto.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{rcc}
+        \hline
+        \textbf{Minuto} & \textbf{Accuracy} & \textbf{Macro-F1} \\
+        \hline
+        15              & 53,3\%            & 48,8\%            \\
+        30              & 60,3\%            & 55,9\%            \\
+        45              & 62,6\%            & 58,2\%            \\
+        60              & 69,5\%            & 66,2\%            \\
+        75              & 76,4\%            & 74,0\%            \\
+        90              & 90,6\%            & 89,7\%            \\
+        \hline
+        \multicolumn{3}{l}{\small Fuente: elaboración propia.}
+    \end{tabular}
+    \caption{\textit{Accuracy} y Macro-F1 del XGBoost por minuto de partido}
+    \label{tab:resultados_xgb}
+\end{table}
+
+El modelo alcanza el 69,5\,\% de \textit{accuracy} en el minuto 60, ligeramente por debajo del umbral del 70\,\%. La figura~\ref{fig:accuracy_xgb} muestra la evolución temporal y la figura~\ref{fig:confusion_xgb} la matriz de confusión normalizada.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{assets/figuras/modeling/accuracy_por_minuto_xgb.pdf}
+    \caption{Evolución del \textit{accuracy} y el Macro-F1 por minuto de partido para el XGBoost}
+    \label{fig:accuracy_xgb}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{assets/figuras/modeling/confusion_xgb.pdf}
+    \caption{Matriz de confusión normalizada del XGBoost sobre el conjunto de test}
+    \label{fig:confusion_xgb}
+\end{figure}
+
+La diferencia más destacada respecto al Random Forest es el rendimiento en la clase del empate: el XGBoost obtiene un F1 del 42\,\% frente al 33\,\% del Random Forest, lo que refleja que los pesos de muestra balanceados aplicados durante el entrenamiento consiguen mejorar la detección de la clase minoritaria. Esta mejora en el empate eleva el F1-score macro (61,3\,\% frente a 59,2\,\%), pero se produce a costa de un ligero descenso en el \textit{accuracy} global (64,8\,\% frente a 66,0\,\%). El análisis de importancia de variables (figura~\ref{fig:importancia_xgb}) refleja un patrón similar al del Random Forest, con \texttt{score\_diff} y el \textit{xG} como variables dominantes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{assets/figuras/modeling/feature_importance_xgb.pdf}
+    \caption{Importancia de las 20 variables más relevantes en el XGBoost}
+    \label{fig:importancia_xgb}
+\end{figure}
 
 \section{Evaluación y despliegue}
 

@@ -25,7 +25,7 @@ Predict P(home_win), P(draw), P(away_win) at every minute of a football match, s
 |---|---|---|
 | 2 — Data Understanding (EDA) | `notebooks/eda.ipynb` | Done |
 | 3 — Data Preparation | `notebooks/feature_engineering.ipynb` | Done |
-| 4 — Modeling | `notebooks/modeling.ipynb` | In progress (RF done: 66.4% overall, 71% at min 60) |
+| 4 — Modeling | `notebooks/modeling.ipynb` | In progress (RF done: 66.0% overall, 70.95% at min 60) |
 | 5 — Evaluation & Deployment | — | Pending |
 
 ## Modeling Dataset Schema
@@ -36,9 +36,11 @@ Predict P(home_win), P(draw), P(away_win) at every minute of a football match, s
 
 **Rolling window (last 15 min):** `xg_last15`, `shots_last15`, `pressures_last15`
 
-**Derived features:** `score_diff`, `xg_diff`, `shots_diff`, `possession_home` (carry-based), `pass_completion_home`, `pass_completion_away`, `minutes_remaining`, `period`, `score_tied`, `is_womens`, `players_diff` (red_cards_away − red_cards_home), `players_diff_x_time` (players_diff × minutes_remaining), `total_goals`, `xg_per_shot_home`, `xg_per_shot_away`, `goals_minus_xg_home`, `goals_minus_xg_away`
+**Derived features:** `score_diff`, `xg_diff`, `shots_diff`, `possession_home` (carry-based), `pass_completion_home`, `pass_completion_away`, `minutes_remaining`, `is_womens`, `players_diff` (red_cards_away − red_cards_home), `total_goals`, `xg_per_shot_home`, `xg_per_shot_away`, `goals_minus_xg_home`, `goals_minus_xg_away`
 
-**Total model features: 54**
+**Excluded as redundant:** `minute` (= 90 − minutes_remaining, r = −1.0), `period` (derivable from minutes_remaining threshold), `complete_passes_home/away` (r ≈ 0.98 with passes; recoverable as passes × pass_completion), `score_tied` (= score_diff == 0, zero independent information), `players_diff_x_time` (product of two present features; trees learn this interaction)
+
+**Total model features: 48**
 
 **Target:** `final_result` ∈ {home_win, draw, away_win}
 
