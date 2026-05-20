@@ -1,13 +1,13 @@
 \chapter{Introducción}
 \section{Motivación}
 
-El fútbol es uno de los deportes más populares a nivel mundial, además de constituir un fenómeno social, cultural y económico de gran relevancia, movilizando a millones de aficionados y generando un impacto significativo en la industria del deporte. En este contexto, la capacidad de analizar y predecir el resultado de los partidos (o al menos, de conocer la probabilidad de victoria de cada equipo) representa una herramienta de gran valor tanto para los clubes y sus aficionados como para analistas y casas de apuestas.
+El fútbol es uno de los deportes más populares a nivel mundial, además de constituir un fenómeno social, cultural y económico de gran relevancia, movilizando a millones de aficionados y generando un impacto significativo en la industria del deporte. El mercado global de apuestas deportivas superó los 80.000 millones de dólares en 2022, siendo el fútbol el deporte con mayor volumen de apuestas a nivel mundial. En este contexto, la capacidad de predecir el resultado de los partidos, o al menos de conocer la probabilidad de victoria de cada equipo, representa una herramienta de gran valor tanto para los clubes y sus aficionados como para analistas y operadores de apuestas.
 
-En los años recientes, con el auge de las herramientas de inteligencia artificial y el aprendizaje automático, la recolección de datos deportivos y su análisis ha experimentado un crecimiento enorme. Sin embargo, la predicción de resultados a partir de estos datos sigue representando un problema complejo, debido a la aleatoriedad presente en el deporte y a la naturaleza dinámica del juego con factores difícilmente representables en los modelos actuales.
+En los últimos años, con el auge del aprendizaje automático, la recolección de datos deportivos y su análisis ha experimentado un crecimiento notable. Sin embargo, la predicción de resultados sigue siendo un problema difícil. Los trabajos de referencia en este campo sitúan la precisión de los mejores modelos en torno al 65--70\% \citep{baboota2019predictive, horvat2020review}, lo que refleja tanto la alta variabilidad inherente al fútbol como las limitaciones de los enfoques que solo utilizan información previa al partido.
 
-Los modelos tradicionales de predicción de resultados presentan limitaciones significativas, ya que no son capaces de capturar relaciones no lineales ni aprovechar la gran cantidad de información de la que se dispone actualmente. En este sentido, las técnicas de \textit{machine learning} ofrecen una alternativa prometedora, puesto que permiten desarrollar modelos predictivos más complejos que pueden resultar en una predicción basada en más factores y, por tanto, más informada.
+Los modelos clásicos de predicción no capturan relaciones no lineales ni incorporan la información que se genera durante el propio encuentro. Las técnicas de \textit{machine learning} abren la posibilidad de construir modelos más complejos, capaces de integrar eventos intrapartido y ajustar las probabilidades de victoria a medida que avanza el juego.
 
-Por todo ello, el desarrollo de un sistema de predicción de resultados de partidos de fútbol mediante técnicas de \textit{machine learning} presenta un reto tanto a nivel académico como aplicado, ya que requiere un gran nivel de conocimiento técnico y también del juego y de los factores que influyen en su desarrollo.
+Este trabajo propone aprovechar esa oportunidad desarrollando un sistema que estime, en cada minuto del partido, la probabilidad de victoria local, empate y victoria visitante a partir de datos históricos de eventos reales. Mediante ingeniería de características temporales, modelos de clasificación supervisada y una evaluación por punto de corte temporal, el objetivo es alcanzar o superar el 70\% de precisión que los modelos actuales apenas logran con la información completa del encuentro.
 
 \section{Planteamiento del trabajo}
 
@@ -23,4 +23,31 @@ Finalmente, el alcance del trabajo estará condicionado por la disponibilidad y 
 
 \section{Estructura del trabajo}
 
-El trabajo se estructura en seis capítulos principales, además de una introducción y un apartado de conclusiones. En el primer capítulo se presenta la introducción al tema, la motivación y el planteamiento del trabajo. El segundo capítulo se centra en el contexto y estado del arte, revisando los trabajos previos relacionados con la predicción de resultados en fútbol y las técnicas de \textit{machine learning} aplicadas a este ámbito. El tercer capítulo detalla los objetivos específicos del proyecto y la metodología seguida para alcanzarlos. El cuarto capítulo describe el desarrollo del sistema, incluyendo la recopilación de datos, el preprocesado, la selección de variables y la modelización. El quinto capítulo presenta los resultados obtenidos, analizando el rendimiento de los modelos y su capacidad predictiva. Finalmente, el sexto capítulo concluye el trabajo, resumiendo los hallazgos principales y proponiendo posibles líneas de trabajo futuro.
+El trabajo se organiza en siete capítulos cuyo contenido se resume en la Tabla~\ref{tab:estructura}.
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabularx}{\textwidth}{|c|p{3.8cm}|X|}
+        \hline
+        \textbf{Cap.} & \textbf{Título}               & \textbf{Contenido principal}                                                                                                                                          \\
+        \hline
+        1             & Introducción                  & Motivación del trabajo, planteamiento del problema y estructura de la memoria.                                                                                        \\
+        \hline
+        2             & Contexto y estado del arte    & Revisión de trabajos previos sobre predicción de resultados deportivos con técnicas de \textit{machine learning}, organizados por tipo de enfoque y datos utilizados. \\
+        \hline
+        3             & Objetivos y metodología       & Definición de los objetivos del proyecto y descripción de los marcos metodológicos adoptados: Scrum para la gestión y CRISP-DM para el ciclo de vida del dato.        \\
+        \hline
+        4             & Identificación de requisitos  & Descripción de la herramienta web propuesta y especificación de sus requisitos funcionales, no funcionales y de datos.                                                \\
+        \hline
+        5             & Desarrollo                    & Obtención y análisis exploratorio de los datos, ingeniería de características temporales y entrenamiento de los modelos de clasificación.                             \\
+        \hline
+        6             & Resultados                    & Comparación de modelos mediante \textit{accuracy}, \textit{F1-score} macro y matrices de confusión, con análisis del rendimiento por punto temporal del partido.      \\
+        \hline
+        7             & Conclusiones y trabajo futuro & Síntesis de los hallazgos principales, valoración del cumplimiento de objetivos y propuesta de líneas de investigación futura.                                        \\
+        \hline
+    \end{tabularx}
+    \caption{Estructura y contenido de la memoria.}
+    \label{tab:estructura}
+\end{table}
