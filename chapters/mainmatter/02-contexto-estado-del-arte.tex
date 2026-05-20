@@ -8,6 +8,8 @@ La mayor parte de los sistemas de predicción existentes se apoyan en informaci�
 
 El objetivo del presente trabajo es abordar este problema desarrollando un sistema capaz de predecir la probabilidad de cada resultado (victoria local, empate y victoria visitante) a partir de datos históricos de eventos correspondientes a partidos ya disputados, transformados en métricas acumuladas minuto a minuto. De este modo, no se plantea un sistema de inferencia en tiempo real sobre un flujo de datos en vivo, sino una predicción dinámica intrapartido simulada a partir de información histórica, con aplicación potencial en contextos como el análisis táctico, el \textit{broadcasting} o las apuestas \textit{in-play}.
 
+Como los modelos prepartido no capturan la evolución real del juego, este TFM propone usar eventos intrapartido agregados temporalmente para estimar cómo cambian las probabilidades de victoria local, empate y victoria visitante durante el encuentro.
+
 \section{Estado del arte}
 En los últimos años, la predicción de resultados en eventos deportivos ha sido abordada mediante diversas técnicas de aprendizaje automático, evolucionando desde modelos estadísticos tradicionales hacia enfoques más complejos basados en datos y aprendizaje profundo. En este contexto, los estudios existentes puede organizarse en diferentes líneas de investigación en función del tipo de datos utilizados y de las metodologías empleadas.
 
@@ -53,6 +55,54 @@ Finalmente, el estudio concluye que, aunque el uso de \textit{machine learning} 
 
 Este trabajo proporciona una visión global del estado actual de la investigación en predicción deportiva mediante \textit{machine learning}, permitiendo contextualizar los estudios previamente analizados y evidenciando tanto las fortalezas como las limitaciones de los enfoques basados en datos históricos.
 
+\subsubsection{Síntesis de los estudios revisados}
+
+Para facilitar la comparación entre los trabajos analizados, se recoge en la Tabla \ref{tab:sintesis_historicos} una síntesis de los principales elementos de cada estudio. Esta tabla permite observar de forma conjunta el tipo de datos utilizado, los modelos aplicados, los resultados reportados y la principal relación de cada trabajo con el presente TFM.
+
+\begin{table}[H]
+    \centering
+    \scriptsize
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{|p{2.5cm}|p{2.7cm}|p{2.7cm}|p{2.5cm}|X|}
+        \hline
+        \textbf{Estudio}                                                                                                                         & \textbf{Dataset} & \textbf{Modelo o enfoque} & \textbf{Métricas o resultados} & \textbf{Aportación y relación con este TFM} \\
+        \hline
+
+        Baboota y Kaur (2019)                                                                                                                    &
+        Partidos históricos de la Premier League, con variables agregadas del rendimiento previo de los equipos.                                 &
+        Regresión logística, árboles de decisión y Random Forest.                                                                                &
+        Precisión aproximada del 65--70\%, con mejor rendimiento de los modelos de ensamblado.                                                   &
+        Referencia directa para formular la predicción de resultados de fútbol como un problema de clasificación multiclase. Su principal limitación es que trabaja con información previa al partido y no incorpora eventos intrapartido.                                     \\
+        \hline
+
+        Gao y Kowalczyk (2019)                                                                                                                   &
+        Datos históricos de partidos de tenis, con estadísticas detalladas de jugadores y partidos.                                              &
+        Random Forest.                                                                                                                           &
+        Precisión superior al 80\% en la predicción del resultado del partido.                                                                   &
+        Aunque se aplica a otro deporte, muestra que los modelos de ensamblado pueden obtener buenos resultados cuando las variables representan correctamente el rendimiento deportivo. También refuerza la importancia de analizar la contribución de las variables.         \\
+        \hline
+
+        Horvat y Job (2020)                                                                                                                      &
+        Revisión de más de 100 estudios sobre predicción de resultados deportivos.                                                               &
+        Análisis comparativo de técnicas de machine learning, como redes neuronales, máquinas de soporte vectorial y modelos basados en árboles. &
+        No presenta una métrica única, al tratarse de una revisión de distintos estudios.                                                        &
+        Contextualiza la predicción deportiva como un problema habitual de clasificación supervisada y destaca la importancia de la selección de características, la calidad de los datos y la falta de estandarización entre estudios.                                        \\
+        \hline
+    \end{tabularx}
+    \caption{Síntesis de trabajos basados en datos históricos previos.}
+    \label{tab:sintesis_historicos}
+\end{table}
+
+\subsubsection{Comparación entre estudios}
+
+Los estudios revisados muestran distintas formas de abordar la predicción deportiva a partir de datos históricos. El trabajo de Baboota y Kaur (2019) es el más directamente relacionado con este TFM, ya que plantea la predicción de resultados de fútbol como un problema de clasificación multiclase con tres posibles salidas: victoria local, empate y victoria visitante. Además, compara modelos clásicos como regresión logística, árboles de decisión y Random Forest, observando que los modelos de ensamblado ofrecen mejor rendimiento que los enfoques más simples.
+
+Por su parte, el trabajo de Gao y Kowalczyk (2019), aunque pertenece al ámbito del tenis, resulta útil porque refuerza una idea también aplicable al fútbol: el rendimiento del modelo depende en gran medida de la calidad de las variables utilizadas. En este caso, Random Forest obtiene buenos resultados porque las variables de entrada describen aspectos muy relevantes del juego, especialmente el rendimiento en el servicio. En comparación con Baboota y Kaur, este estudio no se centra en fútbol ni en un problema de tres clases, pero sí confirma la utilidad de los modelos de ensamblado y del análisis de importancia de variables en predicción deportiva.
+
+La revisión de Horvat y Job (2020) aporta una visión más general. A diferencia de los dos estudios anteriores, no propone un modelo concreto ni un único conjunto de datos, sino que analiza tendencias comunes en la literatura sobre predicción deportiva. Esta revisión permite contextualizar los resultados de Baboota y Kaur y de Gao y Kowalczyk, mostrando que la clasificación supervisada, la selección de características y los modelos no lineales son enfoques habituales en este tipo de problemas.
+
+En conjunto, estos trabajos muestran que los modelos clásicos de machine learning pueden ser una base sólida para la predicción deportiva, especialmente cuando se dispone de variables bien construidas. Sin embargo, también presentan una limitación común: se basan principalmente en información histórica o previa al partido, por lo que no capturan directamente cómo cambia el estado del encuentro durante su desarrollo. Esta limitación justifica que el presente TFM incorpore eventos intrapartido agregados temporalmente como entrada del modelo predictivo.
+
 \subsection{Enfoques basados en información temporal y dinámica del juego}
 
 \subsubsection{Using ELO ratings for match result prediction in association football}
@@ -90,3 +140,23 @@ El modelo propuesto, denominado AS-LSTM, incorpora un mecanismo de atención que
 Los resultados obtenidos muestran que el modelo basado en LSTM con atención supera a modelos tradicionales de aprendizaje automático, demostrando una mayor capacidad para capturar patrones complejos en datos secuenciales y mejorar la precisión en la predicción de resultados deportivos.
 
 Aun así, el enfoque presenta algunas limitaciones. En primer lugar, requiere grandes volúmenes de datos para su entrenamiento, lo que puede dificultar su aplicación en contextos con disponibilidad limitada de información. Además, la complejidad del modelo reduce su interpretabilidad en comparación con modelos más simples, dificultando la comprensión de las decisiones tomadas por el sistema.
+
+\subsubsection{Síntesis y enfoque del TFM}
+
+Los trabajos revisados en este apartado muestran distintas formas de incorporar la dimensión temporal en la predicción deportiva. El sistema ELO introduce una actualización dinámica del rendimiento de los equipos, pero lo hace a partir de resultados anteriores y no mediante los eventos internos del partido. Por otro lado, enfoques como VAEP utilizan datos de eventos para valorar la contribución de cada acción, aunque su objetivo principal no es predecir directamente el resultado final del encuentro en términos de victoria local, empate o victoria visitante. Finalmente, los modelos secuenciales basados en LSTM y mecanismos de atención permiten representar dependencias temporales más complejas, pero suelen requerir grandes volúmenes de datos y presentan una menor interpretabilidad.
+
+A partir de estas limitaciones, el presente TFM adopta un enfoque basado en eventos intrapartido agregados temporalmente. En lugar de modelar la secuencia completa de acciones mediante redes neuronales recurrentes, se transforman los eventos registrados durante el partido en un conjunto de métricas temporales que representan el estado del encuentro en distintos momentos del juego.
+
+Este planteamiento busca aprovechar la información dinámica que aportan los eventos sin asumir la complejidad de un modelo secuencial profundo. Por ello, el trabajo se plantea como una predicción dinámica intrapartido simulada a partir de datos históricos, cuyo objetivo es estimar la probabilidad de victoria local, empate y victoria visitante utilizando únicamente la información disponible hasta cada instante analizado.
+
+\section{Conclusiones del estado del arte}
+
+La revisión realizada permite extraer varias conclusiones relevantes para orientar el desarrollo del presente trabajo. En primer lugar, los enfoques basados en datos históricos previos muestran que las técnicas de machine learning pueden ser útiles para la predicción de resultados deportivos, especialmente cuando se dispone de variables representativas del rendimiento de los equipos. Trabajos como el de Baboota y Kaur (2019) demuestran que la predicción del resultado de un partido de fútbol puede formularse como un problema de clasificación multiclase, mientras que otros estudios refuerzan la importancia de la selección de características y del uso de modelos capaces de capturar relaciones no lineales.
+
+Sin embargo, estos enfoques presentan una limitación clara: suelen trabajar con información disponible antes del inicio del partido o con estadísticas agregadas de encuentros anteriores. Esto hace que no puedan adaptarse al desarrollo real del juego una vez el partido ha empezado. En un deporte como el fútbol, donde el marcador, el ritmo del partido y las acciones relevantes pueden cambiar de forma importante la probabilidad de cada resultado, esta limitación reduce la utilidad de los modelos puramente prepartido.
+
+Por otro lado, los enfoques basados en información temporal y dinámica del juego muestran que incorporar la evolución del partido puede aportar una representación más rica del problema. Modelos como ELO introducen una actualización dinámica del rendimiento, mientras que enfoques basados en eventos, como VAEP, permiten valorar la contribución de las acciones individuales. A su vez, los modelos secuenciales como las redes LSTM permiten capturar dependencias temporales más complejas. No obstante, estos enfoques también presentan limitaciones: algunos no consideran los eventos internos del partido, otros no predicen directamente el resultado final en términos de victoria, empate o derrota, y los modelos secuenciales profundos pueden requerir una mayor complejidad de diseño, entrenamiento e interpretación.
+
+A partir de estas conclusiones, este trabajo se sitúa en un punto intermedio entre los modelos basados únicamente en información histórica previa y los modelos secuenciales más complejos. El enfoque adoptado se basa en utilizar eventos intrapartido de partidos históricos y transformarlos en métricas temporales que representen el estado del encuentro en distintos momentos del juego. De esta forma, se pretende aprovechar la información dinámica del partido sin asumir la complejidad de modelar directamente toda la secuencia de eventos.
+
+Por tanto, este TFM propone desarrollar un sistema que permita predecir cómo cambian las probabilidades de victoria local, empate y victoria visitante a medida que avanza un partido. Para ello, se utilizarán datos históricos de eventos y se tendrá en cuenta únicamente la información disponible hasta cada momento analizado. Con esta propuesta se busca cubrir una limitación detectada en los trabajos revisados: muchos modelos predicen el resultado antes del partido, pero no aprovechan de forma directa lo que ocurre durante el juego.
