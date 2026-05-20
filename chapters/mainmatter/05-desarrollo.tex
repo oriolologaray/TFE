@@ -252,11 +252,14 @@ La línea base del problema es predecir siempre la clase mayoritaria (victoria l
 
 \subsection{Modelos seleccionados}
 
-Se entrenan y comparan dos clasificadores: Random Forest y XGBoost.
+Se entrenan y comparan tres clasificadores: Random Forest, XGBoost y SVM lineal.
 
 \textbf{Random Forest} construye un conjunto de árboles de decisión sobre submuestras aleatorias del dataset y combina sus predicciones por votación mayoritaria. No requiere normalización de variables, gestiona bien las interacciones entre variables sin configuración adicional y permite interpretar el modelo mediante la importancia de cada variable. Se utiliza como modelo de referencia.
 
 \textbf{XGBoost} es un método de potenciación del gradiente que construye los árboles de forma secuencial. Cada árbol corrige los errores del árbol anterior minimizando una función de pérdida regularizada. En clasificación sobre datos tabulares estructurados, este método suele superar al Random Forest gracias a su mayor capacidad de ajuste y a la regularización incorporada. Es el modelo principal del trabajo.
+
+El \textbf{SVM lineal} se incluye como un tercer modelo de comparación. Este tipo de modelo busca separar las clases mediante márgenes de decisión, por lo que puede resultar útil para comprobar si el problema puede resolverse adecuadamente con una frontera de decisión más simple. En este trabajo se utiliza una versión lineal del SVM, ya que el dataset contiene un número elevado de filas y un SVM con kernel no lineal tendría un coste computacional mucho mayor. A diferencia de Random Forest y XGBoost, este modelo sí requiere normalizar las variables de entrada antes del entrenamiento.
+
 
 Se consideró también el uso de una red neuronal recurrente (LSTM) para aprovechar la naturaleza secuencial de las series minuto a minuto, pero fue descartada por la complejidad adicional de diseño y validación que implicaría.
 
@@ -265,6 +268,10 @@ Se consideró también el uso de una red neuronal recurrente (LSTM) para aprovec
 El Random Forest se configura con 300 árboles y pesos de clase balanceados (\texttt{class\_weight='balanced'}), que asignan mayor penalización a los errores en las clases minoritarias. No se realiza búsqueda sistemática de hiperparámetros para este modelo, que actúa como referencia estable.
 
 XGBoost se configura con 300 estimadores, profundidad máxima 6, tasa de aprendizaje 0,1 y tasas de submuestreo de 0,8 por fila y por columna. El desequilibrio de clases se gestiona asignando a cada muestra de entrenamiento un peso inversamente proporcional a la frecuencia de su clase, calculado con la estrategia \texttt{balanced} de scikit-learn. Al igual que con el Random Forest, no se realiza una búsqueda sistemática de hiperparámetros en esta fase.
+
+Para el SVM se utiliza un flujo ligeramente distinto, ya que este modelo es sensible a la escala de las variables y no proporciona probabilidades directamente. En primer lugar, las variables de entrada se normalizan mediante \texttt{StandardScaler}. Después, se evalúan distintos valores del parámetro \texttt{C}, que controla el equilibrio entre margen amplio y penalización de errores de clasificación. Los valores probados son 0,01, 0,1, 1, 10 y 100, seleccionando el mejor valor según el F1-score macro en una partición interna de validación.
+
+La división interna utilizada para el SVM se realiza únicamente dentro del conjunto de entrenamiento, manteniendo intacto el conjunto de test empleado por el resto de modelos. Esta división separa los datos en tres subconjuntos: uno para ajustar el modelo, otro para seleccionar el valor de \texttt{C} y otro para calibrar las probabilidades. La calibración se realiza porque \texttt{LinearSVC} no genera probabilidades de forma directa, pero estas son necesarias para calcular la pérdida logarítmica y comparar el modelo con Random Forest y XGBoost bajo las mismas métricas.
 
 \subsection{Resultados comparativos}
 
@@ -362,6 +369,55 @@ La diferencia más destacada respecto al Random Forest es el rendimiento en la c
     \includegraphics[width=0.80\textwidth]{assets/figuras/modeling/feature_importance_xgb.pdf}
     \caption{Importancia de las 20 variables más relevantes en el XGBoost}
     \label{fig:importancia_xgb}
+\end{figure}
+
+\paragraph{SVM lineal}
+
+El SVM lineal obtiene un accuracy global del 63,9 \%, un F1-score macro del 50,0 \% y una pérdida logarítmica de 0,798 sobre el conjunto de test. La tabla \ref{tab:svm_por_minuto} recoge el accuracy y el F1-score macro para los seis puntos de corte evaluados.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccc}
+        \hline
+        \textbf{Minuto} & \textbf{Accuracy} & \textbf{Macro-F1} \\
+        \hline
+        15              & 56,6 \%           & 42,5 \%           \\
+        30              & 60,0 \%           & 45,9 \%           \\
+        45              & 63,0 \%           & 48,6 \%           \\
+        60              & 68,4 \%           & 54,2 \%           \\
+        75              & 70,8 \%           & 56,6 \%           \\
+        90              & 77,2 \%           & 65,7 \%           \\
+        \hline
+    \end{tabular}
+    \caption{Accuracy y Macro-F1 del SVM lineal por minuto de partido}
+    \label{tab:svm_por_minuto}
+\end{table}
+
+El modelo supera el 70 \% de accuracy en el minuto 75, lo que indica que necesita una cantidad elevada de información del partido para alcanzar el umbral de referencia. A diferencia de los modelos basados en árboles, el SVM lineal trabaja con una frontera de decisión más simple, por lo que tiene más dificultad para representar relaciones complejas entre las variables del partido y el resultado final. La figura \ref{fig:svm_minutos} muestra la evolución del accuracy y del F1-score macro por minuto.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/modeling/accuracy_por_minuto_svm.pdf}
+    \caption{Evolución del accuracy y el Macro-F1 por minuto de partido para el SVM lineal}
+    \label{fig:svm_minutos}
+\end{figure}
+
+La matriz de confusión normalizada, mostrada en la figura \ref{fig:svm_confusion}, permite observar que el principal problema del modelo se encuentra en la clase empate. Aunque el modelo alcanza resultados razonables para las victorias locales y visitantes, apenas identifica correctamente los empates, con un recall muy bajo para esta clase. Esto afecta directamente al F1-score macro, ya que esta métrica penaliza el mal rendimiento en cualquiera de las clases.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{assets/figuras/modeling/confusion_svm.pdf}
+    \caption{Matriz de confusión normalizada del SVM lineal sobre el conjunto de test}
+    \label{fig:svm_confusion}
+\end{figure}
+
+El análisis de coeficientes del SVM lineal permite obtener una interpretación aproximada de las variables con mayor peso en la decisión del modelo. En este caso, destacan variables relacionadas con la posesión, los pases, la diferencia de goles y el marcador acumulado. No obstante, estos coeficientes deben interpretarse con prudencia, ya que no son directamente equivalentes a las importancias de variables utilizadas en modelos basados en árboles. La figura \ref{fig:svm_coeficientes} muestra las 20 variables con mayor peso medio absoluto en el modelo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{assets/figuras/modeling/feature_importance_svm.pdf}
+    \caption{Coeficientes medios absolutos de las 20 variables más relevantes en el SVM lineal}
+    \label{fig:svm_coeficientes}
 \end{figure}
 
 \section{Evaluación y despliegue}
