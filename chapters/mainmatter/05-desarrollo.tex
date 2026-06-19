@@ -262,7 +262,7 @@ Se entrenan y comparan tres clasificadores: Random Forest, XGBoost y SVM lineal.
 
 \textbf{Random Forest} construye un conjunto de árboles de decisión sobre submuestras aleatorias del dataset y combina sus predicciones por votación mayoritaria. No requiere normalización de variables, gestiona bien las interacciones entre variables sin configuración adicional y permite interpretar el modelo mediante la importancia de cada variable. Se utiliza como modelo de referencia.
 
-\textbf{XGBoost} es un método de potenciación del gradiente que construye los árboles de forma secuencial. Cada árbol corrige los errores del árbol anterior minimizando una función de pérdida regularizada. En clasificación sobre datos tabulares estructurados, este método suele superar al Random Forest gracias a su mayor capacidad de ajuste y a la regularización incorporada. Es el modelo principal del trabajo.
+\textbf{XGBoost} es un método de potenciación del gradiente que construye los árboles de forma secuencial. Cada árbol corrige los errores del árbol anterior minimizando una función de pérdida regularizada. En clasificación sobre datos tabulares estructurados, este método suele superar al Random Forest gracias a su mayor capacidad de ajuste y a la regularización incorporada. Se incluye como uno de los modelos principales de la comparativa, especialmente por su buen rendimiento en problemas tabulares y por sus mecanismos internos de regularización.
 
 El \textbf{SVM lineal} se incluye como un tercer modelo de comparación. Este tipo de modelo busca separar las clases mediante márgenes de decisión, por lo que puede resultar útil para comprobar si el problema puede resolverse adecuadamente con una frontera de decisión más simple. En este trabajo se utiliza una versión lineal del SVM, ya que el dataset contiene un número elevado de filas y un SVM con kernel no lineal tendría un coste computacional mucho mayor. A diferencia de Random Forest y XGBoost, este modelo sí requiere normalizar las variables de entrada antes del entrenamiento.
 
@@ -273,19 +273,23 @@ Se consideró también el uso de una red neuronal recurrente (LSTM) para aprovec
 
 \subsubsection{Random Forest}
 
-Para el Random Forest se realizó una búsqueda limitada de hiperparámetros utilizando únicamente el conjunto de entrenamiento. Con el objetivo de evitar fuga de información, esta búsqueda se llevó a cabo mediante una partición interna a nivel de partido, separando 2.217 partidos para el ajuste de los modelos candidatos y 555 partidos para la validación interna. De esta forma, todos los minutos pertenecientes a un mismo encuentro permanecen siempre dentro de la misma partición.
+Para Random Forest se aplicó una búsqueda aleatoria de hiperparámetros mediante \texttt{RandomizedSearchCV}. La búsqueda se realizó únicamente sobre el conjunto de entrenamiento, manteniendo intacto el conjunto de test para la evaluación final.
 
-Se evaluaron cinco configuraciones distintas, modificando el número de árboles, la profundidad máxima, el número mínimo de muestras por hoja y el número de variables consideradas en cada división. En todos los casos se mantuvo el uso de pesos de clase balanceados para compensar el desbalance entre victoria local, empate y victoria visitante. La selección se realizó utilizando el F1-score macro como métrica principal, ya que esta permite valorar el rendimiento de forma equilibrada entre las tres clases.
+Con el objetivo de evitar fuga de información, la validación interna se definió a nivel de partido mediante \texttt{match\_id}. Para ello, se utilizaron 2.217 partidos para ajustar cada configuración candidata y 555 partidos para la validación interna. De esta forma, todos los minutos de un mismo encuentro permanecen siempre dentro de la misma partición.
 
-La mejor configuración obtenida fue un Random Forest con 300 árboles, profundidad máxima igual a 12, un mínimo de 10 muestras por hoja y selección de variables mediante \texttt{log2}. Aunque algunas configuraciones obtenían una accuracy de validación ligeramente superior, esta configuración fue seleccionada porque alcanzaba el mejor F1-score macro, lo que indica un comportamiento más equilibrado entre clases.
+El espacio de búsqueda incluyó distintos valores para el número de árboles, la profundidad máxima, el número mínimo de muestras por hoja, el número de variables consideradas en cada división y la estrategia de ponderación de clases. En total se evaluaron 12 configuraciones candidatas, seleccionando la mejor según el F1-score macro sobre la partición interna de validación. Esta métrica se utilizó como criterio principal porque permite valorar de forma equilibrada el rendimiento entre victoria local, empate y victoria visitante.
+
+La mejor configuración seleccionada fue un Random Forest con 500 árboles, profundidad máxima de 8, un mínimo de 5 muestras por hoja, selección de variables mediante \texttt{sqrt} y pesos de clase balanceados. Esta configuración obtuvo en validación interna un accuracy del 64,8 \%, un F1-score macro del 62,6 \% y una pérdida logarítmica de 0,771. La configuración seleccionada corresponde a un modelo más regularizado, con árboles menos profundos, lo que favorece un comportamiento más equilibrado entre clases.
 
 \subsubsection{XGBoost}
 
-Para XGBoost también se realizó una búsqueda de hiperparámetros utilizando únicamente el conjunto de entrenamiento. Al igual que en el caso del Random Forest, se creó una partición interna a nivel de partido, separando 2.217 partidos para el ajuste de los modelos candidatos y 555 partidos para la validación interna.
+Para XGBoost también se aplicó una búsqueda aleatoria de hiperparámetros mediante \texttt{RandomizedSearchCV}.
 
-En la búsqueda se evaluaron cinco configuraciones distintas, modificando el número de estimadores, la profundidad máxima de los árboles, la tasa de aprendizaje, las tasas de submuestreo por filas y columnas, el peso mínimo por nodo hijo y el parámetro de regularización \texttt{reg\_lambda}. La selección se realizó utilizando el F1-score macro como métrica principal, ya que permite valorar el rendimiento de forma equilibrada entre victoria local, empate y victoria visitante.
+La búsqueda se realizó exclusivamente dentro del conjunto de entrenamiento. Al igual que en Random Forest, se utilizó una partición interna a nivel de partido mediante \texttt{match\_id}, con 2.217 partidos para ajustar cada configuración candidata y 555 partidos para la validación interna. Esta estrategia evita que diferentes minutos de un mismo encuentro aparezcan simultáneamente en entrenamiento interno y validación interna.
 
-La mejor configuración obtenida fue un XGBoost con 500 estimadores, profundidad máxima igual a 3, tasa de aprendizaje de 0,03, \texttt{subsample} de 0,8, \texttt{colsample\_bytree} de 0,8, \texttt{min\_child\_weight} igual a 5 y \texttt{reg\_lambda} igual a 10. Esta configuración obtuvo en la validación interna un accuracy del 65,0 \%, un F1-score macro del 62,5 \% y una pérdida logarítmica de 0,748. El resultado muestra que una configuración con árboles menos profundos, una tasa de aprendizaje menor y mayor regularización ofrece un comportamiento más estable y equilibrado para este problema.
+El espacio de búsqueda incluyó hiperparámetros relacionados con la complejidad del modelo, la tasa de aprendizaje, el submuestreo y la regularización. En concreto, se evaluaron diferentes valores para el número de estimadores, la profundidad máxima de los árboles, la tasa de aprendizaje, \texttt{subsample}, \texttt{colsample\_bytree}, \texttt{min\_child\_weight}, \texttt{reg\_lambda}, \texttt{reg\_alpha} y \texttt{gamma}. En total se probaron 12 configuraciones candidatas, seleccionando la mejor según el F1-score macro sobre la partición interna de validación.
+
+La configuración seleccionada utiliza 300 estimadores, profundidad máxima de 5, tasa de aprendizaje de 0,03, \texttt{subsample} de 0,7, \texttt{colsample\_bytree} de 0,9, \texttt{min\_child\_weight} igual a 3, \texttt{reg\_lambda} igual a 3, \texttt{reg\_alpha} igual a 0,1 y \texttt{gamma} igual a 0,5. Esta configuración obtuvo en validación interna un accuracy del 62,2 \%, un F1-score macro del 62,0 \% y una pérdida logarítmica de 0,783. El resultado refleja una configuración regularizada, con tasa de aprendizaje baja y mecanismos de submuestreo, orientada a mejorar la generalización del modelo.
 
 \subsubsection{SVM lineal}
 
@@ -299,7 +303,7 @@ El mejor valor obtenido fue \texttt{C = 0.01}, lo que indica que una configuraci
 
 \subsubsection{Random Forest}
 
-El Random Forest obtiene un accuracy global del 65,5 \%, un F1-score macro del 62,9 \% y una pérdida logarítmica de 0,759 sobre el conjunto de test. Estos resultados indican que el modelo consigue un rendimiento sólido en la predicción del resultado final del partido, superando claramente la línea base basada en la clase mayoritaria. Además, el F1-score macro muestra que el rendimiento no se concentra únicamente en la clase más frecuente, sino que el modelo mantiene una capacidad razonable para distinguir entre victoria local, empate y victoria visitante.
+El Random Forest obtiene un accuracy global del 65,0 \%, un F1-score macro del 63,3 \% y una pérdida logarítmica de 0,772 sobre el conjunto de test. Estos resultados muestran que el modelo mantiene un rendimiento sólido en la predicción del resultado final del partido, aunque su comportamiento debe interpretarse de forma conjunta entre las distintas métricas. Mientras que la accuracy global se sitúa ligeramente por debajo de otros modelos basados en árboles, el F1-score macro refleja un comportamiento más equilibrado entre las tres clases.
 
 La tabla \ref{tab:rf_por_minuto} recoge el accuracy y el F1-score macro para los seis puntos de corte evaluados.
 
@@ -309,23 +313,23 @@ La tabla \ref{tab:rf_por_minuto} recoge el accuracy y el F1-score macro para los
         \hline
         \textbf{Minuto} & \textbf{Accuracy} & \textbf{Macro-F1} \\
         \hline
-        15              & 54,2 \%           & 49,2 \%           \\
-        30              & 58,4 \%           & 54,8 \%           \\
-        45              & 62,7 \%           & 59,8 \%           \\
-        60              & 69,4 \%           & 67,6 \%           \\
-        75              & 76,7 \%           & 75,3 \%           \\
-        90              & 92,5 \%           & 91,8 \%           \\
+        15              & 52,5 \%           & 49,1 \%           \\
+        30              & 55,9 \%           & 54,4 \%           \\
+        45              & 62,7 \%           & 61,8 \%           \\
+        60              & 70,4 \%           & 69,3 \%           \\
+        75              & 77,5 \%           & 76,2 \%           \\
+        90              & 93,1 \%           & 92,5 \%           \\
         \hline
     \end{tabular}
     \caption{Accuracy y Macro-F1 del Random Forest por minuto de partido}
     \label{tab:rf_por_minuto}
 \end{table}
 
-El rendimiento temporal del modelo muestra una evolución coherente con la naturaleza del problema. En los primeros minutos, el modelo dispone de poca información acumulada sobre el desarrollo del encuentro, por lo que las predicciones resultan más inciertas. En el minuto 15 obtiene un accuracy del 54,2 \% y un F1-score macro del 49,2 \%, valores que reflejan la dificultad de anticipar el resultado final cuando el partido apenas ha comenzado.
+El análisis temporal muestra que el rendimiento del Random Forest aumenta de forma progresiva a medida que avanza el partido. En el minuto 15, el modelo obtiene un accuracy del 52,5 \% y un F1-score macro del 49,1 \%, lo que refleja la dificultad de anticipar el resultado final cuando todavía existe poca información acumulada. En este tramo inicial, las diferencias entre equipos suelen ser reducidas y muchas variables relevantes, como el marcador o la producción ofensiva acumulada, aún no presentan señales suficientemente claras.
 
-A medida que avanza el encuentro, las métricas aumentan de forma progresiva. En el minuto 45, el modelo alcanza un accuracy del 62,7 \% y un F1-score macro del 59,8 \%, lo que indica que la información acumulada durante la primera parte ya aporta señales relevantes para la predicción. En el minuto 60, el modelo se aproxima al umbral del 70 \% de accuracy, con un valor del 69,4 \%, y en el minuto 75 lo supera claramente, alcanzando un 76,7 \% de accuracy y un 75,3 \% de F1-score macro. Finalmente, en el minuto 90, el rendimiento aumenta hasta un accuracy del 92,5 \% y un F1-score macro del 91,8 \%, debido a que el marcador y las métricas acumuladas representan ya de forma muy directa el desenlace del partido.
+A partir del minuto 30, el rendimiento empieza a mejorar de forma gradual. En el minuto 45, el modelo alcanza un accuracy del 62,7 \% y un F1-score macro del 61,8 \%, lo que indica que la información generada durante la primera parte ya permite diferenciar mejor entre los posibles resultados finales. En el minuto 60, el modelo supera el 70 \% de accuracy, con un valor del 70,4 \%, y alcanza un F1-score macro del 69,3 \%. Posteriormente, en el minuto 75, el rendimiento aumenta hasta un 77,5 \% de accuracy y un 76,2 \% de F1-score macro. Finalmente, en el minuto 90, el modelo obtiene un accuracy del 93,1 \% y un F1-score macro del 92,5 \%, debido a que el marcador y las métricas acumuladas representan ya de forma muy directa el desenlace del partido.
 
-Esta evolución se observa en la figura \ref{fig:rf_minutos}, donde se aprecia un crecimiento sostenido tanto del accuracy como del F1-score macro a medida que avanza el encuentro.
+Esta evolución se observa en la figura \ref{fig:rf_minutos}, donde se aprecia un crecimiento sostenido tanto del accuracy como del F1-score macro conforme se incorpora más información del desarrollo del encuentro.
 
 \begin{figure}[H]
     \centering
@@ -334,9 +338,11 @@ Esta evolución se observa en la figura \ref{fig:rf_minutos}, donde se aprecia u
     \label{fig:rf_minutos}
 \end{figure}
 
-La matriz de confusión, mostrada en la figura \ref{fig:rf_confusion}, permite analizar con más detalle el comportamiento del modelo para cada una de las clases. El modelo identifica correctamente una proporción similar de victorias locales y visitantes, con un recall del 72 \% en ambos casos. Esto indica que el Random Forest mantiene un comportamiento equilibrado en la detección de partidos que terminan con victoria de alguno de los dos equipos.
+La matriz de confusión normalizada, mostrada en la figura \ref{fig:rf_confusion}, permite analizar el comportamiento del modelo para cada una de las clases. El Random Forest identifica correctamente el 68 \% de las victorias locales y el 70 \% de las victorias visitantes. En ambos casos, el modelo mantiene una capacidad razonable para detectar situaciones en las que uno de los equipos termina imponiéndose.
 
-El empate continúa siendo la clase más difícil de predecir. Para esta clase, el modelo alcanza un recall del 44 \% y un F1-score del 45 \%. Este resultado es esperable en el contexto del fútbol, ya que el empate es una clase menos frecuente y especialmente sensible a pequeños cambios en el marcador. Un único gol en los minutos finales puede transformar un empate en victoria local o visitante, lo que dificulta que el modelo identifique esta clase con la misma estabilidad que las victorias.
+El resultado más relevante aparece en la clase empate, donde el modelo alcanza un recall del 52 \% y un F1-score del 47 \%. Aunque esta sigue siendo la clase más difícil de predecir, el modelo consigue reconocer una proporción importante de empates. Este comportamiento es coherente con la selección de hiperparámetros mediante F1-score macro, ya que la configuración final no maximiza únicamente la accuracy global, sino que busca un rendimiento más equilibrado entre las tres clases.
+
+No obstante, el aumento en la detección de empates también implica una mayor confusión con algunas situaciones de victoria local o visitante. Esto explica que la accuracy global no sea necesariamente la métrica más alta, mientras que el F1-score macro mejora al repartir mejor el rendimiento entre clases. En un problema como la predicción de resultados de fútbol, esta diferencia es relevante, ya que el empate es una clase menos frecuente y más difícil de separar de los marcadores ajustados.
 
 \begin{figure}[H]
     \centering
@@ -345,9 +351,9 @@ El empate continúa siendo la clase más difícil de predecir. Para esta clase, 
     \label{fig:rf_confusion}
 \end{figure}
 
-El análisis de importancia de variables, mostrado en la figura \ref{fig:rf_importancia}, permite interpretar qué factores tienen mayor peso en las decisiones del modelo. La variable más relevante es la diferencia de goles, lo que resulta coherente con el problema planteado, ya que el marcador actual es uno de los indicadores más directos del resultado final. A continuación aparecen los goles acumulados del equipo local y visitante, así como variables relacionadas con la diferencia entre goles y xG y la diferencia total de xG entre equipos.
+El análisis de importancia de variables, mostrado en la figura \ref{fig:rf_importancia}, indica que la variable más relevante es la diferencia de goles, seguida de los goles acumulados del equipo local y visitante. También aparecen entre las variables principales la diferencia de xG, la diferencia entre goles y xG para ambos equipos, el total de goles, la posesión local, la precisión de pase del equipo local y el xG acumulado del equipo visitante.
 
-La presencia de variables como \texttt{xg\_diff}, \texttt{goals\_minus\_xg\_home} y \texttt{goals\_minus\_xg\_away} indica que el modelo no se limita únicamente a utilizar el marcador, sino que también incorpora información sobre la calidad de las ocasiones generadas y la relación entre rendimiento esperado y goles reales. Asimismo, variables como la posesión local y el total de goles aportan información contextual sobre el dominio del partido y el ritmo ofensivo del encuentro.
+Estos resultados son coherentes con el problema planteado. El modelo se apoya principalmente en el estado del marcador, pero también incorpora variables relacionadas con la calidad ofensiva generada, el rendimiento respecto a los goles esperados y el control del juego. La presencia de variables como \texttt{xg\_diff}, \texttt{goals\_minus\_xg\_home}, \texttt{goals\_minus\_xg\_away} y \texttt{possession\_home} indica que el Random Forest no utiliza únicamente el marcador actual, sino también información contextual sobre cómo se ha desarrollado el partido.
 
 \begin{figure}[H]
     \centering
@@ -356,11 +362,11 @@ La presencia de variables como \texttt{xg\_diff}, \texttt{goals\_minus\_xg\_home
     \label{fig:rf_importancia}
 \end{figure}
 
-En conjunto, los resultados del Random Forest muestran que el modelo es capaz de aprovechar de forma efectiva las variables acumuladas minuto a minuto. Su rendimiento mejora de manera clara conforme avanza el partido, y las variables más importantes son coherentes tanto desde el punto de vista estadístico como futbolístico. No obstante, la dificultad para predecir empates evidencia que el problema sigue siendo complejo, especialmente en situaciones de partido equilibradas o con marcadores ajustados.
+En conjunto, los resultados del Random Forest muestran que el modelo es capaz de aprovechar de forma efectiva las variables acumuladas minuto a minuto. La búsqueda aleatoria de hiperparámetros permite seleccionar una configuración más regularizada y equilibrada, que mejora especialmente la identificación de empates. Aun así, el modelo mantiene la dificultad propia del problema: distinguir correctamente partidos igualados sin aumentar en exceso la confusión con victorias locales o visitantes.
 
 \subsubsection{XGBoost}
 
-El modelo XGBoost obtiene un accuracy global del 65,7 \%, un F1-score macro del 63,2 \% y una pérdida logarítmica de 0,751 sobre el conjunto de test. Estos resultados muestran que el modelo alcanza un rendimiento sólido en la predicción del resultado final del partido y mantiene un comportamiento equilibrado entre las tres clases.
+El modelo XGBoost obtiene un accuracy global del 65,4 \%, un F1-score macro del 62,7 \% y una pérdida logarítmica de 0,753 sobre el conjunto de test. Estos resultados muestran que el modelo mantiene un rendimiento competitivo en la predicción del resultado final del partido.
 
 La tabla \ref{tab:xgb_por_minuto} recoge el accuracy y el F1-score macro para los seis puntos de corte evaluados.
 
@@ -370,23 +376,23 @@ La tabla \ref{tab:xgb_por_minuto} recoge el accuracy y el F1-score macro para lo
         \hline
         \textbf{Minuto} & \textbf{Accuracy} & \textbf{Macro-F1} \\
         \hline
-        15              & 52,9 \%           & 47,1 \%           \\
-        30              & 58,8 \%           & 54,9 \%           \\
-        45              & 63,7 \%           & 61,4 \%           \\
-        60              & 69,7 \%           & 68,2 \%           \\
-        75              & 76,3 \%           & 75,0 \%           \\
-        90              & 92,9 \%           & 92,3 \%           \\
+        15              & 53,6 \%           & 48,1 \%           \\
+        30              & 59,8 \%           & 55,9 \%           \\
+        45              & 63,3 \%           & 60,3 \%           \\
+        60              & 68,8 \%           & 67,0 \%           \\
+        75              & 76,6 \%           & 75,1 \%           \\
+        90              & 92,5 \%           & 91,8 \%           \\
         \hline
     \end{tabular}
     \caption{Accuracy y Macro-F1 del XGBoost por minuto de partido}
     \label{tab:xgb_por_minuto}
 \end{table}
 
-El rendimiento temporal del XGBoost muestra una evolución progresiva a medida que avanza el partido. En el minuto 15, el modelo obtiene un accuracy del 52,9 \% y un F1-score macro del 47,1 \%, lo que refleja la dificultad de anticipar el resultado final cuando todavía existe poca información acumulada sobre el desarrollo del encuentro. En estos primeros minutos, muchas variables relevantes, como el marcador, el xG o las acciones ofensivas, aún no han generado diferencias suficientemente claras entre ambos equipos.
+El rendimiento temporal del XGBoost muestra una evolución progresiva a medida que avanza el partido. En el minuto 15, el modelo obtiene un accuracy del 53,6 \% y un F1-score macro del 48,1 \%, valores que reflejan la dificultad de anticipar el resultado final en los primeros compases del encuentro. En ese momento, el modelo dispone de poca información acumulada y muchas de las variables más relevantes todavía no presentan diferencias claras entre los equipos.
 
-A partir del minuto 30, el rendimiento empieza a mejorar de forma más notable. En el minuto 45, el modelo alcanza un accuracy del 63,7 \% y un F1-score macro del 61,4 \%, indicando que la información acumulada durante la primera parte ya permite diferenciar mejor entre los posibles resultados finales. En el minuto 60, el modelo se aproxima al umbral del 70 \% de accuracy, con un valor del 69,7 \%, y alcanza un F1-score macro del 68,2 \%. Posteriormente, en el minuto 75, supera claramente dicho umbral, con un accuracy del 76,3 \% y un F1-score macro del 75,0 \%. Finalmente, en el minuto 90, el modelo obtiene un accuracy del 92,9 \% y un F1-score macro del 92,3 \%, reflejando que el marcador y las métricas acumuladas representan ya de forma muy directa el desenlace del partido.
+A partir del minuto 30, el rendimiento empieza a mejorar de forma más consistente. En el minuto 45, el modelo alcanza un accuracy del 63,3 \% y un F1-score macro del 60,3 \%, lo que indica que la información de la primera parte ya aporta señales relevantes para la predicción. En el minuto 60, el accuracy se sitúa en el 68,8 \% y el F1-score macro en el 67,0 \%, acercándose al umbral del 70 \%. Posteriormente, en el minuto 75, el modelo alcanza un accuracy del 76,6 \% y un F1-score macro del 75,1 \%. Finalmente, en el minuto 90, obtiene un accuracy del 92,5 \% y un F1-score macro del 91,8 \%, debido a que el estado del marcador y las métricas acumuladas representan ya de forma muy directa el desenlace final del partido.
 
-Esta evolución se muestra en la figura \ref{fig:xgb_minutos}, donde se observa el crecimiento progresivo del accuracy y del F1-score macro conforme se incorporan más minutos de información al modelo.
+Esta evolución se muestra en la figura \ref{fig:xgb_minutos}, donde se observa cómo la capacidad predictiva del modelo aumenta conforme se dispone de más información del desarrollo del encuentro.
 
 \begin{figure}[H]
     \centering
@@ -395,9 +401,9 @@ Esta evolución se muestra en la figura \ref{fig:xgb_minutos}, donde se observa 
     \label{fig:xgb_minutos}
 \end{figure}
 
-La matriz de confusión normalizada, mostrada en la figura \ref{fig:xgb_confusion}, permite analizar el comportamiento del modelo para cada una de las clases. El XGBoost identifica correctamente una proporción similar de victorias locales y visitantes, con un recall del 72 \% en ambos casos. Esto indica que el modelo captura de forma equilibrada muchos de los patrones asociados a situaciones en las que uno de los dos equipos termina imponiéndose.
+La matriz de confusión normalizada, mostrada en la figura \ref{fig:xgb_confusion}, permite analizar el comportamiento del modelo para cada una de las clases. El XGBoost identifica correctamente el 72 \% de las victorias locales y el 72 \% de las victorias visitantes. Esto indica que el modelo mantiene un comportamiento equilibrado en la detección de partidos que terminan con victoria de alguno de los dos equipos.
 
-La clase empate continúa siendo la más difícil de predecir, aunque el modelo consigue un rendimiento relevante para esta categoría, con un recall del 46 \% y un F1-score del 46 \%. Esta dificultad es coherente con la naturaleza del fútbol, donde los empates suelen depender de márgenes reducidos y pueden transformarse en victoria local o visitante por un único evento decisivo. Además, el empate funciona como una clase intermedia entre el dominio del equipo local y el dominio del equipo visitante, lo que dificulta su separación respecto al resto de clases.
+La clase empate continúa siendo la más difícil de predecir. Para esta clase, el modelo obtiene un recall del 44 \% y un F1-score del 45 \%. Este resultado es coherente con la naturaleza del problema, ya que el empate suele corresponder a situaciones de mayor equilibrio entre equipos y puede transformarse en victoria local o visitante por un único evento decisivo. Aun así, el modelo consigue identificar una parte relevante de los empates, lo que contribuye a mantener un F1-score macro competitivo.
 
 \begin{figure}[H]
     \centering
@@ -406,9 +412,9 @@ La clase empate continúa siendo la más difícil de predecir, aunque el modelo 
     \label{fig:xgb_confusion}
 \end{figure}
 
-El análisis de importancia de variables, mostrado en la figura \ref{fig:xgb_importancia}, permite identificar qué factores tienen mayor peso en las decisiones del modelo. La variable más relevante es la diferencia de goles, seguida de los goles acumulados del equipo local, los pases del equipo local y los goles acumulados del equipo visitante. También aparecen entre las variables más importantes las entradas en el tercio ofensivo del equipo visitante, las conducciones del equipo local, los tiros del equipo visitante, el total de goles, la diferencia de xG y la posesión local.
+El análisis de importancia de variables, mostrado en la figura \ref{fig:xgb_importancia}, permite identificar qué factores tienen mayor peso en las decisiones del modelo. La variable más relevante es la diferencia de goles, seguida de los goles acumulados del equipo local, las entradas en el tercio ofensivo del equipo visitante, los minutos restantes, los pases del equipo local y los goles acumulados del equipo visitante. También aparecen entre las variables más importantes la posesión local, los tiros del equipo visitante, el total de goles y los pases del equipo visitante.
 
-Estos resultados muestran que el XGBoost no se apoya únicamente en el marcador actual, sino que también utiliza variables relacionadas con el control del juego, el volumen ofensivo y la producción acumulada de ambos equipos. La presencia de variables como \texttt{passes\_home}, \texttt{attacks\_third\_away}, \texttt{carries\_home}, \texttt{shots\_away} y \texttt{xg\_diff} indica que el modelo incorpora información sobre dominio territorial, circulación de balón y generación de ocasiones, además del estado del marcador.
+Estos resultados muestran que el XGBoost combina información del marcador con variables que describen el contexto temporal y el desarrollo del juego. La presencia de \texttt{score\_diff}, \texttt{goals\_home} y \texttt{goals\_away} confirma el peso del marcador actual, mientras que variables como \texttt{minutes\_remaining}, \texttt{attacks\_third\_away}, \texttt{passes\_home}, \texttt{shots\_away} y \texttt{possession\_home} indican que el modelo también incorpora señales relacionadas con el tiempo restante, el dominio territorial, la circulación de balón y la producción ofensiva.
 
 \begin{figure}[H]
     \centering
@@ -417,7 +423,7 @@ Estos resultados muestran que el XGBoost no se apoya únicamente en el marcador 
     \label{fig:xgb_importancia}
 \end{figure}
 
-En conjunto, los resultados del XGBoost muestran que el modelo es capaz de aprovechar de forma efectiva las variables acumuladas minuto a minuto. Su rendimiento aumenta de manera clara conforme avanza el partido y las variables más importantes son coherentes desde el punto de vista futbolístico, ya que combinan información del marcador, el tiempo restante, la calidad ofensiva generada y ciertos elementos contextuales del juego.
+En conjunto, los resultados del XGBoost muestran que el modelo aprovecha de forma efectiva las variables acumuladas minuto a minuto y mantiene un rendimiento competitivo frente al resto de modelos. Su principal fortaleza se encuentra en combinar señales del marcador, el tiempo restante y el desarrollo ofensivo del partido. No obstante, al igual que ocurre con el resto de enfoques, la predicción de empates sigue siendo el principal reto del problema.
 
 \subsubsection{SVM lineal}
 
