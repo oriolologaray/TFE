@@ -44,5 +44,60 @@ Los modelos entrenados en la fase anterior se comparan utilizando un conjunto de
 \subsubsection{Fase 6. Despliegue (\textit{Deployment})}
 El modelo con mejores métricas de predicción se integra en una plataforma interactiva que permite introducir o simular datos de un partido y visualizar la evolución de las probabilidades de cada resultado minuto a minuto.
 
+\subsection{Planificación y cronograma}
+
+El desarrollo del proyecto se ha estructurado en sprints de dos semanas siguiendo el marco Scrum. La tabla~\ref{tab:cronograma} recoge la planificación ejecutada, indicando para cada sprint el período, el objetivo principal y las actividades completadas.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|c|p{3cm}|X|}
+        \hline
+        \textbf{Sprint} & \textbf{Período} & \textbf{Objetivo y actividades principales} \\
+        \hline
+        1 & \textit{por definir} & Revisión bibliográfica y selección de fuentes de datos. Estudio del repositorio StatsBomb Open Data y definición del alcance del problema. \\
+        2 & \textit{por definir} & Descarga y construcción del dataset de eventos. Implementación del script de descarga y verificación de integridad. \\
+        3 & \textit{por definir} & Análisis exploratorio de datos (EDA). Estudio de la distribución de clases, análisis temporal, correlaciones y limitaciones del dataset. \\
+        4 & \textit{por definir} & Ingeniería de características. Construcción del dataset de modelado con variables acumuladas, de ventana deslizante y derivadas. \\
+        5 & \textit{por definir} & Modelado inicial. Entrenamiento del modelo Random Forest con búsqueda de hiperparámetros. \\
+        6 & \textit{por definir} & Modelado comparativo. Entrenamiento de XGBoost y SVM lineal. Evaluación comparativa de los tres modelos. \\
+        7 & \textit{por definir} & Análisis de resultados e interpretabilidad. Análisis de importancia de variables y evaluación temporal por minuto. \\
+        8 & \textit{por definir} & Redacción de la memoria y desarrollo del prototipo de despliegue. \\
+        \hline
+    \end{tabularx}
+    \caption{Cronograma ejecutado del proyecto por sprints}
+    \label{tab:cronograma}
+\end{table}
+
+La naturaleza cíclica de Scrum ha resultado especialmente adecuada para este proyecto, dado que varias decisiones de modelado solo pudieron validarse mediante experimentación. Por ejemplo, la inclusión inicial de un modelo LSTM fue revisada al final del sprint de modelado inicial, cuando se constató que la complejidad adicional no estaba justificada dado el enfoque de agregación temporal adoptado. En su lugar, se incorporó un SVM lineal que permite valorar el rendimiento de una frontera de decisión simple frente a los métodos \textit{ensemble}. Esta capacidad de ajustar el alcance entre iteraciones es precisamente la ventaja que aporta Scrum en un proyecto de ciencia de datos donde los resultados experimentales condicionan las decisiones siguientes.
+
 \subsection{Herramientas y tecnologías}
 El desarrollo se realiza íntegramente en Python porque es el lenguaje de programación líder para inteligencia artificial y ciencia de datos gracias a su amplio ecosistema de librerías especializadas \citep{raschka2020python}, que cubren desde el preprocesamiento de los datos hasta el modelado y la evaluación de modelos de aprendizaje automático. Para la obtención de los datos se utiliza \texttt{statsbombpy}, que permite descargar los datos del repositorio \textit{StatsBomb} directamente desde Python. El control de versiones tanto del código como de la memoria del proyecto se gestiona con Git y GitHub porque permite mantener la trazabilidad del desarrollo a lo largo del proyecto.
+
+\section{Grado de cumplimiento de los objetivos}
+
+La tabla~\ref{tab:cumplimiento} recoge el grado de cumplimiento de cada objetivo específico al cierre del proyecto, indicando el estado alcanzado y las desviaciones respecto a la planificación inicial.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|p{5cm}|p{2.8cm}|X|}
+        \hline
+        \textbf{Objetivo específico} & \textbf{Estado} & \textbf{Observaciones} \\
+        \hline
+        Revisión bibliográfica sobre predicción de resultados deportivos & Cumplido & Se ha ampliado con trabajos recientes sobre Transformers, redes de grafos y calibración probabilística. \\
+        \hline
+        Recopilación y tratamiento de datos de StatsBomb Open Data & Cumplido & Dataset de 12,2\,M de eventos descargado, verificado y almacenado en \path{datasets/statsbomb_events.csv}. \\
+        \hline
+        Construcción de variables explicativas por segmentos temporales & Cumplido & Dataset de modelado con 48 variables generado: acumuladas, ventana deslizante y derivadas (\path{datasets/match_minute_features.csv}). \\
+        \hline
+        Entrenamiento y comparación de modelos de clasificación multiclase & Parcialmente cumplido & Se han entrenado tres modelos (Random Forest, XGBoost y SVM lineal). No se ha incluido aprendizaje profundo: el LSTM previsto fue descartado por complejidad adicional sin beneficio claro sobre el enfoque de agregación adoptado. \\
+        \hline
+        Evaluación mediante métricas cuantitativas y análisis temporal & Cumplido & Los tres modelos se evalúan con \textit{accuracy}, F1-score macro y \textit{log-loss} en seis puntos temporales (min 15, 30, 45, 60, 75 y 90). El umbral del 70\,\% de precisión no se alcanza a nivel global (mejor resultado: 65,4\,\%), pero sí desde el minuto 60 en adelante, lo que es coherente con la naturaleza del problema. \\
+        \hline
+        Integración del modelo en una solución interactiva & Pendiente & El modelo final (XGBoost) está serializado y listo para su integración. El desarrollo del prototipo de aplicación web está en curso. \\
+        \hline
+    \end{tabularx}
+    \caption{Grado de cumplimiento de los objetivos específicos del proyecto}
+    \label{tab:cumplimiento}
+\end{table}
+
+Las principales desviaciones respecto a la planificación inicial son dos. En primer lugar, la exclusión del LSTM como alternativa de modelado: aunque se planteó como posibilidad condicionada a la disponibilidad de datos y tiempo, la experimentación mostró que el enfoque de agregación temporal minuto a minuto no requiere modelar la secuencia completa de eventos para obtener resultados competitivos. En segundo lugar, el objetivo del 70\,\% de precisión global no se ha alcanzado con ninguno de los modelos; no obstante, el análisis temporal muestra que esta limitación es característica de los primeros minutos del partido, donde la información disponible es escasa, y que los modelos superan ese umbral a medida que avanza el encuentro. Ambas desviaciones están justificadas por los resultados obtenidos y se discuten en detalle en los capítulos de Desarrollo y Resultados.

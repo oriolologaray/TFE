@@ -62,6 +62,66 @@ Los requisitos funcionales son aquellos que hacen referencia a las funcionalidad
     \item \textbf{RF-13 - Exportación de resultados:} La aplicación debe permitir exportar los resultados de una simulación, incluyendo el minuto analizado, las métricas generadas y las probabilidades estimadas, en un formato reutilizable.
 \end{itemize}
 
+\section{Priorización de requisitos funcionales}
+
+Con el objetivo de orientar el desarrollo y facilitar la verificación posterior del sistema, los requisitos funcionales definidos en el apartado anterior se han priorizado utilizando el método MoSCoW \citep{clegg1994case}. Este método clasifica cada requisito en una de cuatro categorías: \textit{Must have} (imprescindible), \textit{Should have} (deseable), \textit{Could have} (posible si el tiempo lo permite) y \textit{Won't have} (fuera del alcance de esta versión).
+
+La categoría \textit{Must have} agrupa los requisitos que son condición necesaria para que la herramienta cumpla su objetivo principal. Sin ellos, el sistema no puede funcionar como prueba de concepto del enfoque desarrollado. La categoría \textit{Should have} incluye requisitos que aportan valor significativo a la herramienta y deben implementarse siempre que sea viable. Los requisitos \textit{Could have} ofrecen funcionalidad adicional y se incorporarán si el tiempo de desarrollo lo permite. Los requisitos \textit{Won't have} corresponden a funcionalidades que quedan explícitamente fuera del alcance de esta versión, tal como se describió en la sección de descripción general.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|c|X|c|}
+        \hline
+        \textbf{Requisito} & \textbf{Descripción} & \textbf{Prioridad} \\
+        \hline
+        RF-01 & Carga de partidos desde StatsBomb Open Data & Must \\
+        RF-02 & Selección de competición, temporada y partido & Must \\
+        RF-03 & Carga de eventos asociados al partido seleccionado & Must \\
+        RF-04 & Procesamiento de eventos para extraer métricas acumuladas & Must \\
+        RF-05 & Selección del minuto o tramo de análisis & Must \\
+        RF-06 & Control estricto de la información disponible hasta el instante analizado & Must \\
+        RF-07 & Predicción de probabilidades de resultado mediante el modelo & Must \\
+        RF-08 & Visualización clara de las probabilidades de cada resultado & Must \\
+        RF-09 & Visualización de la evolución temporal de las probabilidades & Should \\
+        RF-10 & Visualización de métricas descriptivas acumuladas del partido & Should \\
+        RF-11 & Comparación de la predicción con el resultado final real & Should \\
+        RF-12 & Consulta de información básica sobre el modelo utilizado & Could \\
+        RF-13 & Exportación de resultados de la simulación & Could \\
+        \hline
+    \end{tabularx}
+    \caption{Priorización MoSCoW de los requisitos funcionales}
+    \label{tab:moscow}
+\end{table}
+
+\section{Matriz de trazabilidad}
+
+La matriz de trazabilidad permite relacionar cada requisito funcional con el artefacto de implementación que lo satisface. Esto facilita verificar que todos los requisitos han sido considerados durante el desarrollo y permite identificar con claridad qué componente del sistema responde a cada necesidad funcional.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|c|X|X|}
+        \hline
+        \textbf{Requisito} & \textbf{Descripción} & \textbf{Artefacto de implementación} \\
+        \hline
+        RF-01 & Carga de partidos & Dataset \path{datasets/statsbomb_events.csv}; script de descarga de StatsBomb Open Data \\
+        RF-02 & Selección de partido & Interfaz web: selectores de competición, temporada y partido \\
+        RF-03 & Carga de eventos & Filtrado del dataset por \texttt{match\_id} \\
+        RF-04 & Procesamiento de eventos & Pipeline de \textit{feature engineering} (\path{notebooks/feature_engineering.ipynb}); dataset \path{datasets/match_minute_features.csv} \\
+        RF-05 & Selección del minuto & Interfaz web: control deslizante o campo numérico de selección de minuto \\
+        RF-06 & Control temporal de la información & Filtro por minuto en el pipeline de inferencia: solo se usan las filas con minuto $\leq t$ \\
+        RF-07 & Predicción del resultado & Modelo XGBoost serializado (\path{models/xgboost.pkl}) \\
+        RF-08 & Visualización de probabilidades & Interfaz web: panel de probabilidades (barras o indicadores por clase) \\
+        RF-09 & Evolución temporal & Interfaz web: gráfico de líneas con la evolución de las probabilidades minuto a minuto \\
+        RF-10 & Métricas descriptivas & Interfaz web: panel de estadísticas acumuladas por equipo \\
+        RF-11 & Comparación con resultado real & Interfaz web: indicador del resultado final real junto a la predicción generada \\
+        RF-12 & Información del modelo & Interfaz web: sección informativa sobre el modelo y las variables utilizadas \\
+        RF-13 & Exportación de resultados & Interfaz web: función de descarga de resultados en formato CSV o similar \\
+        \hline
+    \end{tabularx}
+    \caption{Matriz de trazabilidad requisito--implementación}
+    \label{tab:trazabilidad}
+\end{table}
+
 \section{Diagramas de casos de uso}
 
 Los casos de uso del sistema incluyen todas aquellas acciones que realizan los usuarios dentro del sistema. La especificación de casos de uso permite identificar y organizar de manera clara los requisitos funcionales del sistema a desarrollar.

@@ -55,10 +55,6 @@ Finalmente, el estudio concluye que, aunque el uso de \textit{machine learning} 
 
 Este trabajo proporciona una visión global del estado actual de la investigación en predicción deportiva mediante \textit{machine learning}, permitiendo contextualizar los estudios previamente analizados y evidenciando tanto las fortalezas como las limitaciones de los enfoques basados en datos históricos.
 
-\subsubsection{Síntesis de los estudios revisados}
-
-Para facilitar la comparación entre los trabajos analizados, se recoge en la Tabla \ref{tab:sintesis_historicos} una síntesis de los principales elementos de cada estudio. Esta tabla permite observar de forma conjunta el tipo de datos utilizado, los modelos aplicados, los resultados reportados y la principal relación de cada trabajo con el presente TFM.
-
 \begin{table}[H]
     \centering
     \scriptsize
@@ -93,15 +89,23 @@ Para facilitar la comparación entre los trabajos analizados, se recoge en la Ta
     \label{tab:sintesis_historicos}
 \end{table}
 
-\subsubsection{Comparación entre estudios}
-
 Los estudios revisados muestran distintas formas de abordar la predicción deportiva a partir de datos históricos. El trabajo de Baboota y Kaur (2019) es el más directamente relacionado con este TFM, ya que plantea la predicción de resultados de fútbol como un problema de clasificación multiclase con tres posibles salidas: victoria local, empate y victoria visitante. Además, compara modelos clásicos como regresión logística, árboles de decisión y Random Forest, observando que los modelos de ensamblado ofrecen mejor rendimiento que los enfoques más simples.
 
 Por su parte, el trabajo de Gao y Kowalczyk (2019), aunque pertenece al ámbito del tenis, resulta útil porque refuerza una idea también aplicable al fútbol: el rendimiento del modelo depende en gran medida de la calidad de las variables utilizadas. En este caso, Random Forest obtiene buenos resultados porque las variables de entrada describen aspectos muy relevantes del juego, especialmente el rendimiento en el servicio. En comparación con Baboota y Kaur, este estudio no se centra en fútbol ni en un problema de tres clases, pero sí confirma la utilidad de los modelos de ensamblado y del análisis de importancia de variables en predicción deportiva.
 
 La revisión de Horvat y Job (2020) aporta una visión más general. A diferencia de los dos estudios anteriores, no propone un modelo concreto ni un único conjunto de datos, sino que analiza tendencias comunes en la literatura sobre predicción deportiva. Esta revisión permite contextualizar los resultados de Baboota y Kaur y de Gao y Kowalczyk, mostrando que la clasificación supervisada, la selección de características y los modelos no lineales son enfoques habituales en este tipo de problemas.
 
-En conjunto, estos trabajos muestran que los modelos clásicos de machine learning pueden ser una base sólida para la predicción deportiva, especialmente cuando se dispone de variables bien construidas. Sin embargo, también presentan una limitación común: se basan principalmente en información histórica o previa al partido, por lo que no capturan directamente cómo cambia el estado del encuentro durante su desarrollo. Esta limitación justifica que el presente TFM incorpore eventos intrapartido agregados temporalmente como entrada del modelo predictivo.
+\subsubsection{HIGFormer: predicción del resultado mediante grafos heterogéneos de interacción jugador-equipo}
+
+El trabajo de \cite{wang2025higformer} propone HIGFormer (\textit{Player-Team Heterogeneous Interaction Graph Transformer}), una arquitectura que combina redes de grafos heterogéneos con mecanismos Transformer para predecir el resultado de partidos de fútbol a partir de estadísticas históricas de jugadores y datos previos al encuentro. El objetivo del estudio es aprovechar la estructura relacional inherente al juego de equipo, modelando explícitamente las interacciones entre jugadores y entre equipos.
+
+El modelo consta de tres componentes principales. En primer lugar, una red de interacción de jugadores (\textit{Player Interaction Network}) que modela las relaciones entre jugadores mediante un grafo heterogéneo con convoluciones locales y atención global. En segundo lugar, una red de interacción entre equipos (\textit{Team Interaction Network}) que captura las relaciones históricas entre los dos equipos enfrentados. Por último, un \textit{Match Comparison Transformer} que combina ambas representaciones para generar la predicción final del resultado.
+
+Esta arquitectura permite representar relaciones estructurales entre jugadores y equipos que los modelos tabulares clásicos no pueden capturar directamente. Los resultados obtenidos sobre el conjunto de datos WyScout Open Access muestran que HIGFormer supera significativamente a los modelos de referencia en la predicción del resultado final.
+
+La limitación más relevante es la dependencia de datos a nivel de jugador individual, que incluyen estadísticas de rendimiento, historial de enfrentamientos y composición de cada equipo. Estos datos no siempre están disponibles en abierto y aumentan considerablemente la complejidad del sistema. En relación con el presente TFM, HIGFormer representa el estado del arte en la predicción de resultados con datos estructurados previos al partido; su diferencia principal es que opera exclusivamente con información histórica de jugadores y equipos, mientras que este TFM emplea eventos intrapartido agregados temporalmente para modelar el estado del encuentro minuto a minuto durante el propio partido.
+
+En conjunto, estos cuatro trabajos muestran distintos niveles de complejidad dentro del paradigma basado en datos previos al partido. Los modelos clásicos —Baboota y Kaur (2019), Gao y Kowalczyk (2019)— demuestran que los métodos de ensamblado son una base competitiva cuando se dispone de variables bien construidas, mientras que la revisión de Horvat y Job (2020) contextualiza estos enfoques en la literatura más amplia. HIGFormer (Wang et al., 2025) representa la frontera actual de estos modelos al incorporar relaciones estructurales entre jugadores y equipos mediante redes de grafos. No obstante, todos comparten una limitación común: operan con información previa al inicio del partido y no pueden adaptarse al desarrollo real del juego una vez iniciado el encuentro. Esta limitación justifica que el presente TFM incorpore eventos intrapartido agregados temporalmente como entrada del modelo predictivo.
 
 \subsection{Enfoques basados en información temporal y dinámica del juego}
 
@@ -141,13 +145,111 @@ Los resultados obtenidos muestran que el modelo basado en LSTM con atención sup
 
 Aun así, el enfoque presenta algunas limitaciones. En primer lugar, requiere grandes volúmenes de datos para su entrenamiento, lo que puede dificultar su aplicación en contextos con disponibilidad limitada de información. Además, la complejidad del modelo reduce su interpretabilidad en comparación con modelos más simples, dificultando la comprensión de las decisiones tomadas por el sistema.
 
-\subsubsection{Síntesis y enfoque del TFM}
+\subsubsection{Seq2Event: aprendizaje de secuencias de eventos deportivos mediante Transformers}
 
-Los trabajos revisados en este apartado muestran distintas formas de incorporar la dimensión temporal en la predicción deportiva. El sistema ELO introduce una actualización dinámica del rendimiento de los equipos, pero lo hace a partir de resultados anteriores y no mediante los eventos internos del partido. Por otro lado, enfoques como VAEP utilizan datos de eventos para valorar la contribución de cada acción, aunque su objetivo principal no es predecir directamente el resultado final del encuentro en términos de victoria local, empate o victoria visitante. Finalmente, los modelos secuenciales basados en LSTM y mecanismos de atención permiten representar dependencias temporales más complejas, pero suelen requerir grandes volúmenes de datos y presentan una menor interpretabilidad.
+El trabajo desarrollado por \cite{simpson2022seq2event} propone un enfoque basado en arquitecturas Transformer para modelar partidos de fútbol como secuencias de eventos discretos. A diferencia de los modelos que agregan estadísticas de juego en ventanas temporales, este estudio trata cada partido como una secuencia ordenada de acciones y entrena el modelo para predecir el siguiente evento a partir del contexto acumulado.
 
-A partir de estas limitaciones, el presente TFM adopta un enfoque basado en eventos intrapartido agregados temporalmente. En lugar de modelar la secuencia completa de acciones mediante redes neuronales recurrentes, se transforman los eventos registrados durante el partido en un conjunto de métricas temporales que representan el estado del encuentro en distintos momentos del juego.
+La arquitectura propuesta, denominada Seq2Event, aplica mecanismos de autoatención (\textit{self-attention}) para capturar dependencias de largo alcance entre los eventos del partido. El modelo aprende representaciones contextuales de cada acción teniendo en cuenta la secuencia completa de acciones precedentes, lo que le permite modelar patrones complejos como el ritmo de juego, los cambios de posesión o la presión defensiva acumulada.
 
-Este planteamiento busca aprovechar la información dinámica que aportan los eventos sin asumir la complejidad de un modelo secuencial profundo. Por ello, el trabajo se plantea como una predicción dinámica intrapartido simulada a partir de datos históricos, cuyo objetivo es estimar la probabilidad de victoria local, empate y victoria visitante utilizando únicamente la información disponible hasta cada instante analizado.
+A partir de las representaciones aprendidas, los autores proponen la métrica de utilización de posesión (\textit{poss-util}), que mide cuánto aprovecha cada equipo sus periodos de posesión. Esta métrica se evalúa sobre datos de StatsBomb Open Data y presenta correlaciones significativas con el rendimiento real de los equipos.
+
+La limitación principal de este enfoque es su complejidad. El modelo requiere procesar toda la secuencia de eventos del partido a nivel de acción individual, lo que implica un mayor coste computacional y una menor interpretabilidad en comparación con enfoques de agregación temporal. Sin embargo, el trabajo demuestra que los Transformers pueden capturar patrones de juego que los modelos basados en estadísticas agregadas no recogen directamente, y constituye una referencia directa para el presente TFM al compartir la misma fuente de datos.
+
+Los cuatro trabajos revisados en este apartado muestran distintas formas de incorporar la dimensión temporal en la predicción deportiva. El sistema ELO introduce una actualización dinámica del rendimiento entre partidos, pero lo hace a partir de resultados finales anteriores y no mediante eventos internos del juego. Los enfoques basados en eventos, como VAEP y Seq2Event, utilizan el registro de acciones individuales para modelar el desarrollo del encuentro de forma dinámica, aunque con objetivos distintos: VAEP valora la contribución de cada acción sin predecir directamente el resultado final, mientras que Seq2Event aprende representaciones secuenciales de la dinámica del juego mediante Transformers. Finalmente, los modelos basados en LSTM con mecanismos de atención permiten representar dependencias temporales complejas, pero suelen requerir grandes volúmenes de datos y presentan una menor interpretabilidad.
+
+A partir de estas limitaciones, el presente TFM adopta un enfoque basado en eventos intrapartido agregados temporalmente. En lugar de modelar la secuencia completa de acciones mediante redes neuronales recurrentes o Transformers, se transforman los eventos registrados durante el partido en métricas temporales que representan el estado del encuentro en cada minuto, preservando la información dinámica sin asumir la complejidad computacional de los modelos secuenciales profundos.
+
+\subsection{Calibración probabilística en la evaluación de modelos deportivos}
+
+El estudio de \cite{walsh2024calibration} aborda una cuestión metodológica relevante para la evaluación de sistemas de predicción deportiva: si el criterio de selección del modelo debe basarse en la precisión (\textit{accuracy}) o en la calibración de las probabilidades estimadas.
+
+Los autores evalúan empíricamente distintos modelos de \textit{machine learning} sobre datos de la NBA, utilizando cuotas de casas de apuestas como referencia. Los resultados muestran que un modelo optimizado para calibración genera un retorno sobre la inversión un 69,86\,\% superior al de un modelo optimizado únicamente para maximizar la precisión. En concreto, el modelo calibrado obtiene un retorno positivo del 34,69\,\%, frente al $-35{,}17$\,\% del modelo basado exclusivamente en \textit{accuracy}.
+
+La calibración se refiere a la capacidad de un modelo para que sus probabilidades estimadas se correspondan fielmente con las frecuencias reales observadas. Un modelo bien calibrado que asigna una probabilidad del 70\,\% a la victoria local debe acertar en ese resultado en aproximadamente el 70\,\% de los casos en que realiza esa estimación. Esta propiedad es especialmente relevante cuando el sistema no solo predice una clase, sino que muestra distribuciones de probabilidad al usuario.
+
+Este trabajo tiene una implicación directa para el presente TFM, cuya herramienta propuesta muestra al usuario las probabilidades de los tres posibles resultados del partido. En consecuencia, la calidad de las probabilidades estimadas tiene tanta importancia como la precisión global del modelo, lo que justifica el uso de la pérdida logarítmica (\textit{log-loss}) como métrica principal junto con el \textit{accuracy} y el F1-score macro.
+
+\subsection{Síntesis comparativa del estado del arte}
+
+La tabla~\ref{tab:sintesis_global} recoge de forma conjunta los nueve trabajos revisados, permitiendo comparar en una sola vista el tipo de datos empleado, el enfoque o modelo propuesto, los resultados obtenidos y la aportación específica de cada estudio al presente TFM.
+
+\begin{table}[H]
+    \centering
+    \scriptsize
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{|p{2.4cm}|p{2.5cm}|p{2.6cm}|p{2.2cm}|X|}
+        \hline
+        \textbf{Estudio}                                                                 & \textbf{Dataset} & \textbf{Modelo o enfoque} & \textbf{Métricas o resultados} & \textbf{Aportación y relación con este TFM} \\
+        \hline
+
+        Baboota y Kaur (2019)                                                            &
+        Partidos históricos de la Premier League.                                        &
+        Regresión logística, árboles de decisión y Random Forest.                        &
+        65--70\,\% de precisión; mejor rendimiento de los modelos de ensamblado.         &
+        Referencia directa para formular la predicción de fútbol como clasificación multiclase. Limitado a información previa al partido.                                                                              \\
+        \hline
+
+        Gao y Kowalczyk (2019)                                                           &
+        Datos históricos de partidos de tenis.                                           &
+        Random Forest.                                                                   &
+        Precisión superior al 80\,\%.                                                    &
+        Confirma la utilidad de los modelos de ensamblado en deportes y refuerza el análisis de importancia de variables.                                                                                              \\
+        \hline
+
+        Horvat y Job (2020)                                                              &
+        Revisión de más de 100 estudios deportivos.                                      &
+        Análisis comparativo de ML (redes neuronales, SVM, árboles).                     &
+        Sin métrica única (revisión).                                                    &
+        Contextualiza la clasificación supervisada como enfoque estándar y destaca la falta de estandarización entre estudios.                                                                                         \\
+        \hline
+
+        Wang et al.\ (2025)                                                              &
+        WyScout Open Access; estadísticas individuales de jugadores.                     &
+        Red de grafos heterogéneos con Transformer (HIGFormer).                          &
+        Supera significativamente a modelos de referencia en el conjunto de test.        &
+        Estado del arte en predicción de resultados con datos históricos estructurados de jugadores. Opera con información previa al partido, no con eventos intrapartido acumulados minuto a minuto.                  \\
+        \hline
+
+        Hvattum y Arntzen (2010)                                                         &
+        Resultados históricos de partidos de fútbol.                                     &
+        Sistema ELO combinado con regresión.                                             &
+        Mejora respecto a modelos estáticos basados en estadísticas previas.             &
+        Incorpora una actualización dinámica del rendimiento entre partidos, aunque no considera eventos internos del encuentro.                                                                                       \\
+        \hline
+
+        Decroos et al.\ (2019)                                                           &
+        StatsBomb Open Data; eventos individuales.                                       &
+        Modelos de probabilidad sobre secuencias de acciones (VAEP).                     &
+        Valoración continua de acciones; sin métrica de clasificación de resultado.      &
+        Demuestra el valor predictivo de los eventos intrapartido. No está orientado a predecir victoria, empate o derrota directamente.                                                                               \\
+        \hline
+
+        Zhang et al.\ (2022)                                                             &
+        Secuencias de datos de rendimiento deportivo.                                    &
+        LSTM con mecanismo de atención (AS-LSTM).                                        &
+        Supera a modelos tradicionales de ML en precisión.                               &
+        Muestra que las arquitecturas secuenciales capturan patrones temporales complejos, pero requieren grandes volúmenes de datos y reducen la interpretabilidad.                                                   \\
+        \hline
+
+        Simpson et al.\ (2022)                                                           &
+        StatsBomb Open Data; secuencias de eventos individuales.                         &
+        Transformer (Seq2Event).                                                         &
+        Métrica \textit{poss-util}; sin \textit{accuracy} de clasificación de resultado. &
+        Aplica Transformers a la misma fuente de datos que este TFM. Modela la secuencia completa de eventos frente a la agregación temporal por minuto adoptada aquí.                                                 \\
+        \hline
+
+        Walsh y Joshi (2024)                                                             &
+        Partidos de la NBA con cuotas de apuestas.                                       &
+        Modelos clásicos de ML optimizados para calibración frente a \textit{accuracy}.  &
+        Modelo calibrado: $+34{,}69$\,\% de retorno; modelo preciso: $-35{,}17$\,\%.     &
+        Justifica empíricamente el uso de la pérdida logarítmica como métrica clave cuando el sistema muestra probabilidades al usuario, no solo la clase predicha.                                                    \\
+        \hline
+    \end{tabularx}
+    \caption{Síntesis comparativa de los trabajos revisados en el estado del arte.}
+    \label{tab:sintesis_global}
+\end{table}
+
+Del conjunto de trabajos revisados se extraen tres conclusiones directamente aplicables al diseño de este TFM. En primer lugar, los modelos de ensamblado son una base competitiva para la predicción de resultados deportivos —tanto en enfoques clásicos como Baboota y Kaur (2019) como en arquitecturas avanzadas como HIGFormer (Wang et al., 2025)— y no requieren modelar secuencias completas de eventos para obtener resultados relevantes. En segundo lugar, los eventos intrapartido son la fuente de información más adecuada para un sistema de predicción dinámica, como muestran VAEP (Decroos et al., 2019) y Seq2Event (Simpson et al., 2022); la diferencia respecto a este TFM reside en que dichos trabajos modelan los eventos individualmente, mientras que aquí se agregan en métricas temporales minuto a minuto. En tercer lugar, cuando el sistema está orientado a mostrar probabilidades al usuario, la calidad de las estimaciones probabilísticas es un criterio de evaluación tan importante como la precisión global, lo que justifica el uso de la pérdida logarítmica junto con el \textit{accuracy} y el F1-score macro \citep{walsh2024calibration}.
 
 \section{Conclusiones del estado del arte}
 
@@ -155,8 +257,8 @@ La revisión realizada permite extraer varias conclusiones relevantes para orien
 
 Sin embargo, estos enfoques presentan una limitación clara: suelen trabajar con información disponible antes del inicio del partido o con estadísticas agregadas de encuentros anteriores. Esto hace que no puedan adaptarse al desarrollo real del juego una vez el partido ha empezado. En un deporte como el fútbol, donde el marcador, el ritmo del partido y las acciones relevantes pueden cambiar de forma importante la probabilidad de cada resultado, esta limitación reduce la utilidad de los modelos puramente prepartido.
 
-Por otro lado, los enfoques basados en información temporal y dinámica del juego muestran que incorporar la evolución del partido puede aportar una representación más rica del problema. Modelos como ELO introducen una actualización dinámica del rendimiento, mientras que enfoques basados en eventos, como VAEP, permiten valorar la contribución de las acciones individuales. A su vez, los modelos secuenciales como las redes LSTM permiten capturar dependencias temporales más complejas. No obstante, estos enfoques también presentan limitaciones: algunos no consideran los eventos internos del partido, otros no predicen directamente el resultado final en términos de victoria, empate o derrota, y los modelos secuenciales profundos pueden requerir una mayor complejidad de diseño, entrenamiento e interpretación.
+Por otro lado, los enfoques basados en información temporal y dinámica del juego muestran que incorporar la evolución del partido puede aportar una representación más rica del problema. Modelos como ELO introducen una actualización dinámica del rendimiento entre partidos, enfoques basados en eventos como VAEP permiten valorar la contribución de las acciones individuales, y las arquitecturas secuenciales como LSTM y Transformers (Seq2Event) capturan dependencias temporales complejas. No obstante, estos enfoques también presentan limitaciones: los orientados a valoración de acciones no predicen directamente el resultado final, y los modelos secuenciales profundos reducen la interpretabilidad y requieren mayores volúmenes de datos. Finalmente, tanto los modelos basados en datos históricos como los orientados a la dinámica del partido comparten la necesidad de evaluar la calidad de las probabilidades estimadas y no solo la clase predicha, especialmente cuando el sistema está orientado a mostrar distribuciones al usuario \citep{walsh2024calibration}.
 
-A partir de estas conclusiones, este trabajo se sitúa en un punto intermedio entre los modelos basados únicamente en información histórica previa y los modelos secuenciales más complejos. El enfoque adoptado se basa en utilizar eventos intrapartido de partidos históricos y transformarlos en métricas temporales que representen el estado del encuentro en distintos momentos del juego. De esta forma, se pretende aprovechar la información dinámica del partido sin asumir la complejidad de modelar directamente toda la secuencia de eventos.
+A partir de estas conclusiones, este trabajo se sitúa en un punto intermedio entre los modelos basados únicamente en información histórica previa y los enfoques secuenciales o estructurales más complejos. El enfoque adoptado se basa en utilizar eventos intrapartido de partidos históricos y transformarlos en métricas temporales que representen el estado del encuentro en distintos momentos del juego. De esta forma, se pretende aprovechar la información dinámica del partido sin asumir la complejidad de modelar directamente toda la secuencia de eventos.
 
 Por tanto, este TFM propone desarrollar un sistema que permita predecir cómo cambian las probabilidades de victoria local, empate y victoria visitante a medida que avanza un partido. Para ello, se utilizarán datos históricos de eventos y se tendrá en cuenta únicamente la información disponible hasta cada momento analizado. Con esta propuesta se busca cubrir una limitación detectada en los trabajos revisados: muchos modelos predicen el resultado antes del partido, pero no aprovechan de forma directa lo que ocurre durante el juego.

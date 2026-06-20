@@ -25,8 +25,20 @@ Predict P(home_win), P(draw), P(away_win) at every minute of a football match, s
 |---|---|---|
 | 2 — Data Understanding (EDA) | `notebooks/eda.ipynb` | Done |
 | 3 — Data Preparation | `notebooks/feature_engineering.ipynb` | Done |
-| 4 — Modeling | `notebooks/modeling.ipynb` | In progress (RF done: 66.0% overall, 70.95% at min 60) |
-| 5 — Evaluation & Deployment | — | Pending |
+| 4 — Modeling | `notebooks/modeling.ipynb` | Done (RF + XGBoost + SVM lineal trained; XGBoost selected as final model) |
+| 5 — Evaluation & Deployment | `notebooks/modeling.ipynb` (sections 6–7) | Evaluation done; deployment section in thesis is empty placeholder |
+
+### Model Results (test set: seasons 2020–2025, 692 matches, 62,280 rows)
+
+| Model | Accuracy | Macro-F1 | Log-loss | Acc @ min 60 |
+|---|---|---|---|---|
+| Random Forest | 65.0% | 63.3% | 0.772 | 70.4% |
+| XGBoost (**final**) | 65.4% | 62.7% | 0.753 | 68.8% |
+| SVM lineal | 63.9% | 50.0% | 0.798 | 68.4% |
+
+XGBoost chosen as final model: best accuracy + lowest log-loss (probability quality matters for the prototype). Random Forest has better Macro-F1 (better on draws). SVM lineal barely identifies draws (recall 3%).
+
+Trained models saved in `models/random_forest.pkl` and `models/xgboost.pkl`.
 
 ## Modeling Dataset Schema
 
@@ -53,8 +65,15 @@ Predict P(home_win), P(draw), P(away_win) at every minute of a football match, s
 - **One row per minute** (not fixed checkpoints) — aggregate to checkpoints later if needed. Preserves granularity for rolling features and temporal accuracy curves.
 - **`possession_home`**: derived from carry events (no direct possession column in StatsBomb). Falls back to 0.5 when no carries yet.
 - **`is_womens`**: boolean flag — EDA showed different result distributions between men's and women's competitions.
-- **Class imbalance**: home_win ~47%, draw ~27%, away_win ~26%. Use `class_weight='balanced'` or report macro-F1 alongside accuracy.
+- **Class imbalance**: home_win 45.2%, away_win 31.8%, draw 23.0% (across 3,464 matches). Use `class_weight='balanced'` or report macro-F1 alongside accuracy.
 
-## Planned Models
+## Models
 
-Random Forest, XGBoost (primary), and optionally an LSTM for the sequential formulation. Hyperparameter tuning via grid search / random search. Evaluate at multiple temporal checkpoints (min 15, 30, 45, 60, 75, 90) to understand how confidence improves during the match.
+Three models trained and compared: **Random Forest**, **XGBoost** (selected as final), and **SVM lineal** (baseline comparison). LSTM was explicitly discarded due to the added complexity of design and validation without a clear benefit.
+
+Hyperparameter tuning via `RandomizedSearchCV` (12 candidates each), scored by Macro-F1, with internal train/val split at the `match_id` level to avoid leakage. Evaluated at temporal checkpoints min 15, 30, 45, 60, 75, 90.
+
+### Hyperparameter configuration (best)
+- **Random Forest**: 500 trees, max_depth=8, min_samples_leaf=5, max_features='sqrt', class_weight='balanced'
+- **XGBoost**: 300 estimators, max_depth=5, lr=0.03, subsample=0.7, colsample_bytree=0.9, min_child_weight=3, reg_lambda=3, reg_alpha=0.1, gamma=0.5
+- **SVM lineal**: C=0.01 (LinearSVC + StandardScaler + CalibratedClassifierCV for probability output)
