@@ -362,7 +362,45 @@ Estos resultados son coherentes con el problema planteado. El modelo se apoya pr
     \label{fig:rf_importancia}
 \end{figure}
 
+De forma complementaria, se calculó la Permutation Importance del Random Forest sobre una muestra de 3.000 filas del conjunto de test, utilizando el F1-score macro como métrica de referencia. Este análisis mide cuánto disminuye el rendimiento del modelo cuando se altera aleatoriamente cada variable. Como se observa en la figura \ref{fig:perm_rf}, \texttt{score\_diff} es la variable con mayor impacto sobre el rendimiento, seguida de variables como \texttt{possession\_home}, \texttt{goals\_away}, \texttt{total\_goals} y \texttt{pass\_completion\_away}. Esto confirma que el modelo combina información del marcador con variables relacionadas con el control del juego y el rendimiento acumulado.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{assets/figuras/modeling/permutation_importance_rf.pdf}
+    \caption{Permutation Importance del Random Forest sobre una muestra del conjunto de test}
+    \label{fig:perm_rf}
+\end{figure}
+
 En conjunto, los resultados del Random Forest muestran que el modelo es capaz de aprovechar de forma efectiva las variables acumuladas minuto a minuto. La búsqueda aleatoria de hiperparámetros permite seleccionar una configuración más regularizada y equilibrada, que mejora especialmente la identificación de empates. Aun así, el modelo mantiene la dificultad propia del problema: distinguir correctamente partidos igualados sin aumentar en exceso la confusión con victorias locales o visitantes.
+
+\paragraph{Evaluación de ejemplos individuales:}
+
+Para evaluar el comportamiento del Random Forest en casos concretos, se seleccionaron tres partidos aleatorios del conjunto de test y se analizaron las probabilidades generadas en los minutos 30, 60 y 90. Los tres partidos seleccionados finalizaron con victoria local, por lo que se comprueba si el modelo es capaz de anticipar correctamente este resultado en distintos momentos del encuentro.
+
+\begin{table}[H]
+    \centering
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{lcccccc}
+            \hline
+            \textbf{match\_id} & \textbf{Minuto} & \textbf{P(local)} & \textbf{P(empate)} & \textbf{P(visitante)} & \textbf{Predicción} & \textbf{Acierto} \\
+            \hline
+            3775617            & 30              & 45,64 \%          & 35,46 \%           & 18,89 \%              & Local               & Sí               \\
+            3775617            & 60              & 41,78 \%          & 38,02 \%           & 20,19 \%              & Local               & Sí               \\
+            3775617            & 90              & 47,01 \%          & 38,02 \%           & 14,96 \%              & Local               & Sí               \\
+            3893811            & 30              & 74,11 \%          & 19,32 \%           & 6,57 \%               & Local               & Sí               \\
+            3893811            & 60              & 74,70 \%          & 20,79 \%           & 4,51 \%               & Local               & Sí               \\
+            3893811            & 90              & 74,90 \%          & 21,03 \%           & 4,07 \%               & Local               & Sí               \\
+            3920392            & 30              & 32,98 \%          & 40,55 \%           & 26,47 \%              & Empate              & No               \\
+            3920392            & 60              & 26,54 \%          & 50,35 \%           & 23,11 \%              & Empate              & No               \\
+            3920392            & 90              & 71,52 \%          & 23,04 \%           & 5,44 \%               & Local               & Sí               \\
+            \hline
+        \end{tabular}
+    }
+    \caption{Evolución de las probabilidades predichas por Random Forest en tres partidos del conjunto de test}
+    \label{tab:rf_ejemplos_evolucion}
+\end{table}
+
+El Random Forest acierta 7 de las 9 predicciones analizadas. En los dos primeros partidos, el modelo predice victoria local en los tres minutos, aunque en el partido 3775617 las probabilidades son más ajustadas, especialmente en los minutos 60 y 90. En el partido 3893811, la predicción es más estable y la probabilidad de victoria local se mantiene alrededor del 75 \%, lo que refleja una señal más clara para el modelo. En cambio, en el partido 3920392 el encuentro permanece empatado en los minutos 30 y 60, por lo que el modelo asigna mayor probabilidad al empate. Cuando el marcador pasa a ser favorable al equipo local en el minuto 90, el modelo corrige la predicción y asigna un 71,52 \% de probabilidad a la victoria local. Este comportamiento es coherente con la importancia de variables como \texttt{score\_diff}, \texttt{total\_goals} y las métricas acumuladas de rendimiento.
 
 \subsubsection{XGBoost}
 
@@ -423,7 +461,45 @@ Estos resultados muestran que el XGBoost combina información del marcador con v
     \label{fig:xgb_importancia}
 \end{figure}
 
+En el caso de XGBoost, la Permutation Importance también identifica \texttt{score\_diff} como la variable más determinante, con una diferencia clara respecto al resto de variables. Tal como se muestra en la figura \ref{fig:perm_xgb}, también destacan \texttt{possession\_home}, \texttt{attacks\_third\_away}, \texttt{pass\_completion\_away} y \texttt{minutes\_remaining}. Estos resultados indican que el modelo se apoya principalmente en el estado del marcador, pero también incorpora información sobre el tiempo restante, el dominio territorial y la circulación de balón.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{assets/figuras/modeling/permutation_importance_xgb.pdf}
+    \caption{Permutation Importance del XGBoost sobre una muestra del conjunto de test}
+    \label{fig:perm_xgb}
+\end{figure}
+
 En conjunto, los resultados del XGBoost muestran que el modelo aprovecha de forma efectiva las variables acumuladas minuto a minuto y mantiene un rendimiento competitivo frente al resto de modelos. Su principal fortaleza se encuentra en combinar señales del marcador, el tiempo restante y el desarrollo ofensivo del partido. No obstante, al igual que ocurre con el resto de enfoques, la predicción de empates sigue siendo el principal reto del problema.
+
+\paragraph{Evaluación de ejemplos individuales:}
+
+Para XGBoost se utilizaron los mismos tres partidos y los mismos minutos que en el análisis anterior, con el objetivo de comparar las predicciones de los modelos bajo las mismas condiciones. En todos los casos, el resultado final real fue victoria local.
+
+\begin{table}[H]
+    \centering
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{lcccccc}
+            \hline
+            \textbf{match\_id} & \textbf{Minuto} & \textbf{P(local)} & \textbf{P(empate)} & \textbf{P(visitante)} & \textbf{Predicción} & \textbf{Acierto} \\
+            \hline
+            3775617            & 30              & 43,12 \%          & 33,34 \%           & 23,55 \%              & Local               & Sí               \\
+            3775617            & 60              & 32,90 \%          & 36,11 \%           & 30,99 \%              & Empate              & No               \\
+            3775617            & 90              & 61,79 \%          & 32,84 \%           & 5,37 \%               & Local               & Sí               \\
+            3893811            & 30              & 85,07 \%          & 10,98 \%           & 3,95 \%               & Local               & Sí               \\
+            3893811            & 60              & 80,22 \%          & 15,96 \%           & 3,82 \%               & Local               & Sí               \\
+            3893811            & 90              & 86,45 \%          & 11,24 \%           & 2,32 \%               & Local               & Sí               \\
+            3920392            & 30              & 33,92 \%          & 40,33 \%           & 25,75 \%              & Empate              & No               \\
+            3920392            & 60              & 22,73 \%          & 56,71 \%           & 20,56 \%              & Empate              & No               \\
+            3920392            & 90              & 90,97 \%          & 8,18 \%            & 0,85 \%               & Local               & Sí               \\
+            \hline
+        \end{tabular}
+    }
+    \caption{Evolución de las probabilidades predichas por XGBoost en tres partidos del conjunto de test}
+    \label{tab:xgb_ejemplos_evolucion}
+\end{table}
+
+XGBoost acierta 6 de las 9 predicciones analizadas. Su comportamiento es especialmente sólido en el partido 3893811, donde asigna una probabilidad elevada a la victoria local desde el minuto 30 y la mantiene durante todo el encuentro. En el partido 3775617, el modelo predice correctamente victoria local en los minutos 30 y 90, pero en el minuto 60 asigna una probabilidad ligeramente superior al empate, lo que refleja un estado de partido más incierto. En el partido 3920392, XGBoost predice empate en los minutos 30 y 60, cuando el marcador todavía no favorece al equipo local. Sin embargo, en el minuto 90 la probabilidad de victoria local aumenta hasta el 90,97 \%, corrigiendo la predicción cuando el marcador y las métricas acumuladas ya apuntan claramente al resultado final. Este comportamiento confirma que XGBoost reacciona de forma marcada a los cambios en el estado del partido.
 
 \subsubsection{SVM lineal}
 
@@ -482,7 +558,45 @@ A diferencia de las importancias de variables de los modelos basados en árboles
     \label{fig:svm_coeficientes}
 \end{figure}
 
+Para el SVM lineal, la Permutation Importance muestra un patrón distinto al de los modelos basados en árboles. Como se observa en la figura \ref{fig:perm_svm}, la variable con mayor impacto es \texttt{possession\_home}, seguida de \texttt{attacks\_third\_away}, \texttt{score\_diff}, \texttt{goals\_minus\_xg\_home} y \texttt{goals\_away}. Este resultado es coherente con la naturaleza lineal del modelo, que tiende a apoyarse en combinaciones directas de variables de dominio, marcador y rendimiento acumulado. No obstante, como se ha observado en la matriz de confusión, estas variables no son suficientes para separar adecuadamente la clase empate.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{assets/figuras/modeling/permutation_importance_svm.pdf}
+    \caption{Permutation Importance del SVM lineal sobre una muestra del conjunto de test}
+    \label{fig:perm_svm}
+\end{figure}
+
 En conjunto, el SVM lineal cumple una función útil como modelo comparativo, ya que permite evaluar el rendimiento de una aproximación lineal frente a un problema con relaciones claramente complejas. Sus resultados muestran que parte de la información contenida en las variables temporales puede aprovecharse mediante una frontera simple, pero también evidencian que la predicción de empates y la separación equilibrada entre clases requieren modelos con mayor capacidad para capturar interacciones no lineales.
+
+\paragraph{Evaluación de ejemplos individuales:}
+
+El SVM lineal se evaluó sobre los mismos tres partidos y en los mismos minutos 30, 60 y 90. Esta comparación permite observar cómo se comporta el modelo lineal frente a los modelos basados en árboles en escenarios idénticos.
+
+\begin{table}[H]
+    \centering
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{lcccccc}
+            \hline
+            \textbf{match\_id} & \textbf{Minuto} & \textbf{P(local)} & \textbf{P(empate)} & \textbf{P(visitante)} & \textbf{Predicción} & \textbf{Acierto} \\
+            \hline
+            3775617            & 30              & 61,74 \%          & 17,05 \%           & 21,21 \%              & Local               & Sí               \\
+            3775617            & 60              & 57,45 \%          & 25,90 \%           & 16,65 \%              & Local               & Sí               \\
+            3775617            & 90              & 49,31 \%          & 33,95 \%           & 16,74 \%              & Local               & Sí               \\
+            3893811            & 30              & 84,03 \%          & 14,23 \%           & 1,74 \%               & Local               & Sí               \\
+            3893811            & 60              & 81,07 \%          & 16,84 \%           & 2,09 \%               & Local               & Sí               \\
+            3893811            & 90              & 75,65 \%          & 22,02 \%           & 2,33 \%               & Local               & Sí               \\
+            3920392            & 30              & 51,96 \%          & 30,45 \%           & 17,59 \%              & Local               & Sí               \\
+            3920392            & 60              & 40,79 \%          & 36,92 \%           & 22,29 \%              & Local               & Sí               \\
+            3920392            & 90              & 69,12 \%          & 28,20 \%           & 2,69 \%               & Local               & Sí               \\
+            \hline
+        \end{tabular}
+    }
+    \caption{Evolución de las probabilidades predichas por el SVM lineal en tres partidos del conjunto de test}
+    \label{tab:svm_ejemplos_evolucion}
+\end{table}
+
+En estos tres partidos, el SVM lineal acierta las 9 predicciones analizadas. No obstante, este resultado debe interpretarse con prudencia, ya que los tres partidos seleccionados aleatoriamente terminan con victoria local y el SVM tiende a favorecer esta clase frente al empate. En el partido 3920392, por ejemplo, el modelo predice victoria local incluso en los minutos 30 y 60, cuando el marcador todavía está empatado. Esto le permite acertar el resultado final en este caso concreto, pero también es coherente con la dificultad observada del SVM para identificar empates en la matriz de confusión global. Por tanto, estos ejemplos muestran que el SVM puede funcionar bien en partidos que finalmente terminan con victoria local, pero no contradicen su limitación principal: la baja capacidad para separar correctamente la clase empate en situaciones más equilibradas.
 
 \section{Evaluación y despliegue}
 
