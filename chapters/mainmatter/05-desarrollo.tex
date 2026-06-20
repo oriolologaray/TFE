@@ -77,7 +77,7 @@ La clase mayoritaria es la victoria local, con 1.565 partidos (45,2\%), seguida 
     \label{fig:balance_clases}
 \end{figure}
 
-El desequilibrio tiene dos implicaciones directas para el modelado. Un clasificador que predijera siempre \texttt{home\_win} obtendría una precisión del 45,2\% sin aprender ningún patrón, por lo que el \textit{accuracy} por sí solo no es una métrica válida y se usarán F1-score macro y ponderado en su lugar. Además, se aplicará \texttt{class\_weight='balanced'} en los clasificadores que lo soporten para penalizar más los errores en las clases minoritarias.
+El desequilibrio tiene dos implicaciones directas para el modelado. Un clasificador que predijera siempre \texttt{home\_win} obtendría una precisión del 42,9\% sin aprender ningún patrón, por lo que el \textit{accuracy} por sí solo no es una métrica válida y se usarán F1-score macro y ponderado en su lugar. Además, se aplicará \texttt{class\_weight='balanced'} en los clasificadores que lo soporten para penalizar más los errores en las clases minoritarias.
 
 El análisis por separado de las competiciones femeninas y masculinas muestra diferencias relevantes. En las masculinas (2.924 partidos) la distribución es 44,8\% victorias locales, 31,0\% visitantes y 24,2\% empates. En las femeninas (540 partidos) los empates caen al 16,7\% y las victorias visitantes suben al 36,1\%. Esta diferencia justifica incluir una variable binaria que identifique el tipo de competición en el dataset de modelado.
 
@@ -248,7 +248,7 @@ Los modelos se evalúan sobre el conjunto de test formado por las temporadas 202
 
 Adicionalmente, se calcula el \textit{accuracy} en seis instantes del partido: los minutos 15, 30, 45, 60, 75 y 90. Este análisis temporal permite cuantificar a partir de qué momento el modelo supera el umbral de referencia del 70\,\% y cómo evoluciona la confianza de la predicción conforme avanza el encuentro.
 
-La línea base del problema es predecir siempre la clase mayoritaria (victoria local), con un 45,2\,\% de \textit{accuracy}. Cualquier modelo útil debe superar este valor de forma sustancial.
+La línea base del problema es predecir siempre la clase mayoritaria (victoria local), con un 42,9\,\% de \textit{accuracy}. Cualquier modelo útil debe superar este valor de forma sustancial.
 
 \subsubsection{Justificación de la división temporal}
 
@@ -601,5 +601,120 @@ En estos tres partidos, el SVM lineal acierta las 9 predicciones analizadas. No 
 \section{Evaluación y despliegue}
 
 \subsection{Evaluación del modelo final}
+
+\subsubsection*{Comparación frente al baseline}
+
+Como primer paso de la evaluación final, se compara el rendimiento de los modelos con una línea base sencilla. Esta línea base consiste en predecir siempre la clase mayoritaria del conjunto de test. En este caso, la clase más frecuente es \texttt{home\_win}, con 26.730 observaciones sobre un total de 62.280 filas, lo que equivale a un accuracy aproximado del 42,9 \%.
+
+Esta comparación permite comprobar si los modelos entrenados aportan valor real respecto a una estrategia trivial. Si un modelo no superara claramente esta línea base, significaría que no estaría aprovechando de forma efectiva las variables construidas a partir de los eventos del partido.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+        \hline
+        \textbf{Modelo o estrategia} & \textbf{Accuracy} & \textbf{Mejora frente al baseline} \\
+        \hline
+        Baseline clase mayoritaria   & 42,9 \%           & --                                 \\
+        Random Forest                & 65,0 \%           & +22,1 p.p.                         \\
+        XGBoost                      & 65,4 \%           & +22,5 p.p.                         \\
+        SVM lineal                   & 63,9 \%           & +21,0 p.p.                         \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de los modelos frente a la línea base de clase mayoritaria}
+    \label{tab:comparacion_baseline}
+\end{table}
+
+Los tres modelos superan claramente la línea base. Esto indica que las variables temporales generadas durante la fase de preparación de datos contienen información útil para anticipar el resultado final del partido. XGBoost obtiene la mayor accuracy global, con un 65,4 \%, seguido muy de cerca por Random Forest, con un 65,0 \%. El SVM lineal también supera ampliamente el baseline, aunque su rendimiento debe interpretarse con más prudencia debido a su peor comportamiento en la clase empate, como se analiza en los apartados siguientes.
+
+\subsubsection*{Selección del modelo final}
+
+A partir de los resultados obtenidos, se selecciona XGBoost como modelo principal para el prototipo de predicción. Esta elección se basa en que es el modelo con mayor accuracy global y menor pérdida logarítmica sobre el conjunto de test. Dado que la aplicación propuesta no solo muestra una clase predicha, sino también la probabilidad asociada a cada posible resultado, la calidad de las probabilidades resulta especialmente relevante.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lccc}
+        \hline
+        \textbf{Modelo} & \textbf{Accuracy} & \textbf{Macro-F1} & \textbf{Log-loss} \\
+        \hline
+        Random Forest   & 65,0 \%           & 63,3 \%           & 0,772             \\
+        XGBoost         & 65,4 \%           & 62,7 \%           & 0,753             \\
+        SVM lineal      & 63,9 \%           & 50,0 \%           & 0,798             \\
+        \hline
+    \end{tabular}
+    \caption{Comparación final de los modelos evaluados sobre el conjunto de test}
+    \label{tab:seleccion_modelo_final}
+\end{table}
+
+La diferencia entre XGBoost y Random Forest no es muy amplia, pero XGBoost ofrece el mejor equilibrio desde el punto de vista probabilístico, ya que obtiene la menor pérdida logarítmica. Esto significa que, además de acertar ligeramente más predicciones en términos de accuracy, sus probabilidades están mejor ajustadas al resultado observado en el conjunto de test.
+
+No obstante, Random Forest también presenta un rendimiento muy competitivo y alcanza el mejor F1-score macro. Esto indica que mantiene un comportamiento algo más equilibrado entre clases. Por este motivo, no se descarta su utilidad como modelo alternativo o de comparación. En cambio, el SVM lineal queda por detrás como modelo final, principalmente por su bajo F1-score macro y por la dificultad observada para identificar correctamente la clase empate.
+
+Por tanto, XGBoost se utiliza como modelo principal del prototipo, mientras que Random Forest y SVM lineal se mantienen como modelos de referencia para comparar el comportamiento de distintas estrategias de aprendizaje.
+
+\subsubsection*{Análisis de errores y clases}
+
+El análisis por clases permite observar que el rendimiento de los modelos no es homogéneo para los tres posibles resultados. Las victorias locales y visitantes se identifican con mayor facilidad que los empates, lo cual es coherente con la propia naturaleza del problema. En fútbol, el empate suele representar situaciones de mayor equilibrio entre equipos, y un único gol puede transformar rápidamente esta clase en victoria local o visitante.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lccc}
+        \hline
+        \textbf{Modelo} & \textbf{Recall home\_win} & \textbf{Recall draw} & \textbf{Recall away\_win} \\
+        \hline
+        Random Forest   & 68 \%                     & 52 \%                & 70 \%                     \\
+        XGBoost         & 72 \%                     & 44 \%                & 72 \%                     \\
+        SVM lineal      & 87 \%                     & 3 \%                 & 78 \%                     \\
+        \hline
+    \end{tabular}
+    \caption{Recall por clase de los modelos evaluados}
+    \label{tab:recall_por_clase}
+\end{table}
+
+Random Forest consigue el mejor comportamiento en la clase empate, con un recall del 52 \%. Este resultado explica por qué obtiene el mejor F1-score macro, aunque no sea el modelo con mayor accuracy global. XGBoost, por su parte, presenta un rendimiento más equilibrado entre victorias locales y visitantes, con un recall del 72 \% en ambas clases, pero detecta peor los empates que Random Forest.
+
+El caso del SVM lineal es distinto. Aunque alcanza un accuracy global aceptable, su recall para la clase empate es solo del 3 \%. Esto indica que el modelo tiende a clasificar gran parte de los empates como victorias locales o visitantes. Por tanto, su resultado global puede parecer razonable, pero el análisis por clases muestra una limitación importante. Este comportamiento justifica que el SVM se mantenga como modelo comparativo, pero no como modelo principal del sistema.
+
+En conjunto, los errores más relevantes se concentran en los partidos igualados. Cuando el marcador y las métricas acumuladas muestran una ventaja clara para uno de los equipos, los modelos suelen generar predicciones coherentes. En cambio, cuando el partido está equilibrado o el marcador no refleja todavía una diferencia clara, aumenta la probabilidad de confusión entre empate y victoria de alguno de los equipos.
+
+\subsubsection*{Evaluación probabilística}
+
+Además de la clase predicha, en este trabajo es importante evaluar la calidad de las probabilidades generadas por los modelos. La herramienta propuesta no solo debe indicar si el resultado más probable es victoria local, empate o victoria visitante, sino también mostrar cómo se distribuye la probabilidad entre las tres opciones. Por este motivo, se utiliza la pérdida logarítmica como métrica probabilística.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lc}
+        \hline
+        \textbf{Modelo} & \textbf{Log-loss} \\
+        \hline
+        Random Forest   & 0,772             \\
+        XGBoost         & 0,753             \\
+        SVM lineal      & 0,798             \\
+        \hline
+    \end{tabular}
+    \caption{Pérdida logarítmica de los modelos sobre el conjunto de test}
+    \label{tab:logloss_modelos}
+\end{table}
+
+XGBoost obtiene la menor pérdida logarítmica, con un valor de 0,753. Esto indica que sus probabilidades son, en conjunto, las más adecuadas entre los modelos evaluados. Aunque la diferencia con Random Forest no es muy amplia, este resultado refuerza la elección de XGBoost como modelo principal para el prototipo, ya que la aplicación final mostrará probabilidades y no únicamente una clase predicha.
+
+Random Forest obtiene una pérdida logarítmica de 0,772. Su rendimiento es muy cercano al de XGBoost, pero ligeramente peor desde el punto de vista probabilístico. Aun así, su mejor F1-score macro muestra que sigue siendo un modelo muy competitivo, especialmente cuando se valora el equilibrio entre clases.
+
+El SVM lineal obtiene la peor pérdida logarítmica, con un valor de 0,798. Este resultado es coherente con las limitaciones observadas en la matriz de confusión, especialmente en la clase empate. Además, en este modelo fue necesario calibrar las probabilidades, ya que \texttt{LinearSVC} no las proporciona directamente. La calibración permite comparar el SVM con los otros modelos mediante log-loss, pero no elimina completamente sus dificultades para separar las tres clases.
+
+En resumen, la evaluación probabilística confirma que XGBoost es el modelo más adecuado cuando el objetivo es mostrar probabilidades al usuario. No obstante, las diferencias con Random Forest son reducidas, por lo que ambos modelos pueden considerarse alternativas sólidas dentro del sistema.
+
+\subsubsection*{Limitaciones observadas durante la evaluación}
+
+La evaluación realizada permite identificar varias limitaciones que deben tenerse en cuenta al interpretar los resultados. En primer lugar, el rendimiento global de los modelos no alcanza el 70 \% de accuracy considerando todos los minutos del partido. XGBoost, que obtiene el mejor accuracy global, alcanza un 65,4 \%. Sin embargo, el análisis por minuto muestra que este umbral sí se supera en fases avanzadas del encuentro, cuando el modelo dispone de más información acumulada.
+
+En segundo lugar, la predicción de empates continúa siendo el principal reto del sistema. Aunque Random Forest mejora la detección de esta clase respecto al resto de modelos, los empates siguen siendo más difíciles de identificar que las victorias locales o visitantes. Esto se debe a que los partidos igualados pueden cambiar de clase por un único gol, especialmente en los minutos finales.
+
+Otra limitación es la dependencia del marcador actual. Las variables más importantes en los modelos basados en árboles muestran que \texttt{score\_diff} tiene un peso muy elevado. Esto es coherente con el problema, ya que el marcador es una señal muy informativa, pero también implica que las predicciones son menos seguras cuando el marcador todavía no refleja claramente el desarrollo del partido.
+
+También debe considerarse que la evaluación se realiza sobre datos históricos. El sistema simula una predicción dinámica utilizando únicamente la información disponible hasta cada minuto, pero no trabaja con datos en directo. Por tanto, los resultados muestran la viabilidad del enfoque en un entorno controlado, no el rendimiento de un sistema real conectado a una fuente de eventos en vivo.
+
+Por último, los ejemplos individuales incluidos en el análisis sirven para interpretar casos concretos, pero no sustituyen la evaluación global. En esos ejemplos se observa cómo cambian las probabilidades en partidos concretos, pero las conclusiones principales deben basarse en las métricas calculadas sobre todo el conjunto de test.
+
+En conjunto, la evaluación muestra que los modelos desarrollados superan claramente la línea base y permiten realizar predicciones útiles a medida que avanza el partido. A pesar de eso, los resultados también muestran que el problema sigue siendo complejo, especialmente en minutos tempranos y en partidos igualados. Estas limitaciones deben tenerse en cuenta en el uso del prototipo y en posibles ampliaciones futuras del sistema.
 
 \subsection{Despliegue}
