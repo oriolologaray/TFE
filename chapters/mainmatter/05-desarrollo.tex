@@ -645,11 +645,20 @@ A partir de los resultados obtenidos, se selecciona XGBoost como modelo principa
     \label{tab:seleccion_modelo_final}
 \end{table}
 
-La diferencia entre XGBoost y Random Forest no es muy amplia, pero XGBoost ofrece el mejor equilibrio desde el punto de vista probabilístico, ya que obtiene la menor pérdida logarítmica. Esto significa que, además de acertar ligeramente más predicciones en términos de accuracy, sus probabilidades están mejor ajustadas al resultado observado en el conjunto de test.
+La figura \ref{fig:comparacion_modelos} muestra la evolución del accuracy y del F1-score macro por minuto para los tres modelos. Esta comparación permite observar que las diferencias entre Random Forest y XGBoost son reducidas, especialmente en fases avanzadas del partido. Ambos modelos mejoran de forma clara a medida que avanza el encuentro, mientras que el SVM lineal presenta un crecimiento más limitado, sobre todo en el F1-score macro.
 
-No obstante, Random Forest también presenta un rendimiento muy competitivo y alcanza el mejor F1-score macro. Esto indica que mantiene un comportamiento algo más equilibrado entre clases. Por este motivo, no se descarta su utilidad como modelo alternativo o de comparación. En cambio, el SVM lineal queda por detrás como modelo final, principalmente por su bajo F1-score macro y por la dificultad observada para identificar correctamente la clase empate.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/modeling/comparison_rf_xgb_svm.pdf}
+    \caption{Comparación de accuracy y Macro-F1 por minuto entre los modelos evaluados}
+    \label{fig:comparacion_modelos}
+\end{figure}
 
-Por tanto, XGBoost se utiliza como modelo principal del prototipo, mientras que Random Forest y SVM lineal se mantienen como modelos de referencia para comparar el comportamiento de distintas estrategias de aprendizaje.
+La diferencia entre XGBoost y Random Forest no es muy amplia. Random Forest alcanza el mejor F1-score macro, lo que indica un comportamiento algo más equilibrado entre clases. Sin embargo, XGBoost obtiene el mejor accuracy global y la menor pérdida logarítmica. Esto último es especialmente importante para el prototipo, ya que el sistema no solo debe mostrar una predicción final, sino también probabilidades asociadas a victoria local, empate y victoria visitante.
+
+Por este motivo, XGBoost se considera el modelo principal del prototipo. Su rendimiento global es ligeramente superior en accuracy y ofrece las probabilidades más consistentes según la pérdida logarítmica. Aun así, Random Forest se mantiene como una alternativa muy competitiva, especialmente cuando se prioriza el equilibrio entre clases. En cambio, el SVM lineal queda por detrás como modelo final debido a su bajo F1-score macro y a la dificultad observada para identificar correctamente los empates.
+
+Por tanto, el prototipo utilizará XGBoost como modelo principal, mientras que Random Forest y SVM lineal se conservarán como modelos de referencia para comparar el comportamiento de distintas estrategias de aprendizaje.
 
 \subsubsection*{Análisis de errores y clases}
 
