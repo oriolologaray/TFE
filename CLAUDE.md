@@ -77,3 +77,67 @@ Hyperparameter tuning via `RandomizedSearchCV` (12 candidates each), scored by M
 - **Random Forest**: 500 trees, max_depth=8, min_samples_leaf=5, max_features='sqrt', class_weight='balanced'
 - **XGBoost**: 300 estimators, max_depth=5, lr=0.03, subsample=0.7, colsample_bytree=0.9, min_child_weight=3, reg_lambda=3, reg_alpha=0.1, gamma=0.5
 - **SVM lineal**: C=0.01 (LinearSVC + StandardScaler + CalibratedClassifierCV for probability output)
+
+## Deployment — Streamlit Web App
+
+**Framework:** Streamlit. Performance is not a concern with proper caching: models loaded once via `st.cache_resource`; parquet files loaded via `st.cache_data`.
+
+**Deployment target:** Streamlit Community Cloud (free, direct GitHub integration). GitHub Pages cannot host Streamlit — it serves static files only.
+
+**File sizes (local):**
+- `datasets/statsbomb_events.csv` — 1.7 GB (gitignored)
+- `datasets/match_minute_features.csv` — 121 MB (gitignored)
+- `models/random_forest.pkl` — 986 MB (gitignored; too large for git even compressed)
+- `models/xgboost.pkl` — 3.6 MB
+
+**Deployment data pipeline:** Run `python app/prepare_app_data.py` once locally to generate small committed files in `app/data/`:
+- `features_test.parquet` — test-set rows only (~62k rows, ~5 MB compressed)
+- `match_metadata.parquet` — one row per test match (~100 KB)
+- `timeline_events.parquet` — test-set events, 5 key columns only (~5–15 MB)
+- `xgboost.pkl` — copied from `models/` (3.6 MB)
+- `random_forest.pkl` — gitignored in `app/data/`; RF is local-only unless Git LFS is set up
+
+**RF on cloud:** graceful fallback in `app.py` — if `random_forest.pkl` is absent, the model selector and Tab 2 comparison show XGBoost only. XGBoost is the final model so this is acceptable for the cloud demo.
+
+**File structure:**
+```
+app/
+├── app.py                # full Streamlit app (3 tabs)
+├── prepare_app_data.py   # run once locally to generate app/data/
+└── data/                 # committed to git (small files only)
+    ├── features_test.parquet
+    ├── match_metadata.parquet
+    ├── timeline_events.parquet
+    └── xgboost.pkl
+```
+
+**Game scope:** only test-set matches (seasons 2020–2025, 692 matches). Game selector cascades: Competition → Season → Match.
+
+### Tab 1 — Explorador de partido
+- Sidebar: game selector, model selector (XGBoost / Random Forest), minute slider (1–90)
+- Timeline: Plotly scatter (x=minute, y=event_type, colour=team); goals marked; vertical line at selected minute
+- Probability panel: horizontal bar chart for P(home_win), P(draw), P(away_win) at the selected minute
+- Data source: `match_minute_features.csv` (pre-computed features) + `statsbomb_events.csv` (timeline events)
+
+### Tab 2 — Evolución de probabilidades
+- Same game selection (shared via `st.session_state`)
+- Plotly line chart: x=minute (1–90), three lines per model (home/draw/away), model toggle overlay (XGBoost vs RF)
+- Goal events marked as vertical lines; horizontal dashed reference at 0.33 (random baseline per class)
+- Data source: all 90 rows for the selected match in `match_minute_features.csv`
+
+### Tab 3 — Simulador personalizado (Option A: match state sliders)
+The model takes 48 aggregated features, not raw events. The simulator exposes the most predictive features as controls; the rest are set to dataset medians as neutral defaults.
+
+**User controls:**
+- Goals (home / away) → computes `score_diff`, `total_goals`, `goals_minus_xg`
+- Shots and shots on target (home / away) → computes `shots_diff`
+- xG (home / away) → computes `xg_diff`, `xg_per_shot`
+- Possession % (home) → maps to `possession_home`
+- Minute → maps to `minutes_remaining`
+- Players diff (red cards)
+- Competition type toggle (men's / women's) → `is_womens`
+
+The app calls `features.build_feature_vector()` which assembles the 48-feature vector and calls `model.predict_proba()` in real time. Both models shown side by side.
+
+### Option B — Event builder (future work)
+Allow users to add individual events (Goal, Shot, Pass, Pressure…) at a chosen minute for a chosen team, and have the app recompute cumulative features on the fly. Requires replicating the full feature engineering pipeline inside the app. Feasible but ~3–4× more implementation work than Option A; documented here as a natural extension for a production version.

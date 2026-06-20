@@ -1,1 +1,2 @@
 datasets/statsbomb_events.csv.gz filter=lfs diff=lfs merge=lfs -text
+app/data/random_forest.pkl filter=lfs diff=lfs merge=lfs -text
