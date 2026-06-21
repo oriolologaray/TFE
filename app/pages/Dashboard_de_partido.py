@@ -2,7 +2,7 @@
 Predictor de Resultados de Futbol en Vivo — Explorador de partido.
 
 Ejecucion local:
-    streamlit run app/app.py
+    streamlit run app/Dashboard_de_partido.py
 
 Requiere app/data/ generado previamente:
     python app/prepare_app_data.py
@@ -15,7 +15,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from data_loader import (
     CLASS_COLORS, CLASS_DISPLAY, CLASS_LABELS, FEATURE_COLS,
     load_features, load_metadata, load_models, load_timeline,
