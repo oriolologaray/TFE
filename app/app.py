@@ -1,352 +1,356 @@
 """
-Football Match Result Predictor — Streamlit app.
+Predictor de Resultados de Futbol en Vivo — Explorador de partido.
 
-Run locally:
+Ejecucion local:
     streamlit run app/app.py
 
-Requires app/data/ to be populated first:
+Requiere app/data/ generado previamente:
     python app/prepare_app_data.py
 """
 
+import sys
 from pathlib import Path
 
-import joblib
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-DATA_DIR = Path(__file__).parent / "data"
-
-FEATURE_COLS = [
-    # Cumulative stats — home (17)
-    "goals_home", "shots_home", "shots_on_target_home", "shots_in_box_home",
-    "passes_home", "pressures_home", "duels_won_home", "clearances_home",
-    "blocks_home", "carries_home", "yellow_cards_home", "red_cards_home",
-    "attacks_third_home", "xg_home", "xg_last15_home", "shots_last15_home",
-    "pressures_last15_home",
-    # Cumulative stats — away (17)
-    "goals_away", "shots_away", "shots_on_target_away", "shots_in_box_away",
-    "passes_away", "pressures_away", "duels_won_away", "clearances_away",
-    "blocks_away", "carries_away", "yellow_cards_away", "red_cards_away",
-    "attacks_third_away", "xg_away", "xg_last15_away", "shots_last15_away",
-    "pressures_last15_away",
-    # Derived features (14)
-    "score_diff", "xg_diff", "shots_diff",
-    "possession_home", "pass_completion_home", "pass_completion_away",
-    "minutes_remaining", "players_diff", "total_goals",
-    "xg_per_shot_home", "xg_per_shot_away",
-    "goals_minus_xg_home", "goals_minus_xg_away",
-    "is_womens",
-]
-
-CLASS_LABELS = ["home_win", "draw", "away_win"]
-CLASS_DISPLAY = {"home_win": "Victoria local", "draw": "Empate", "away_win": "Victoria visitante"}
-CLASS_COLORS = {"home_win": "#1f77b4", "draw": "#ff7f0e", "away_win": "#d62728"}
+sys.path.insert(0, str(Path(__file__).parent))
+from data_loader import (
+    CLASS_COLORS, CLASS_DISPLAY, CLASS_LABELS, FEATURE_COLS,
+    load_features, load_metadata, load_models, load_timeline,
+    predict_proba_named,
+)
 
 # ---------------------------------------------------------------------------
-# Cached data loading
-# ---------------------------------------------------------------------------
-@st.cache_resource
-def load_models() -> dict:
-    models = {}
-    xgb_path = DATA_DIR / "xgboost.pkl"
-    rf_path = DATA_DIR / "random_forest.pkl"
-    if xgb_path.exists():
-        models["XGBoost"] = joblib.load(xgb_path)
-    if rf_path.exists():
-        models["Random Forest"] = joblib.load(rf_path)
-    return models
-
-
-@st.cache_data
-def load_features() -> pd.DataFrame:
-    return pd.read_parquet(DATA_DIR / "features_test.parquet")
-
-
-@st.cache_data
-def load_metadata() -> pd.DataFrame:
-    return pd.read_parquet(DATA_DIR / "match_metadata.parquet")
-
-
-@st.cache_data
-def load_timeline() -> pd.DataFrame:
-    return pd.read_parquet(DATA_DIR / "timeline_events.parquet")
-
-
-# ---------------------------------------------------------------------------
-# Helper functions
-# ---------------------------------------------------------------------------
-def predict_minute(model, features_df: pd.DataFrame, match_id: int, minute: int) -> dict:
-    row = features_df[
-        (features_df["match_id"] == match_id) & (features_df["minute"] == minute)
-    ]
-    if row.empty:
-        return {}
-    proba = model.predict_proba(row[FEATURE_COLS])[0]
-    return dict(zip(model.classes_, proba))
-
-
-def predict_all_minutes(model, features_df: pd.DataFrame, match_id: int) -> pd.DataFrame:
-    match_rows = features_df[features_df["match_id"] == match_id].sort_values("minute")
-    probas = model.predict_proba(match_rows[FEATURE_COLS])
-    result = match_rows[["minute"]].copy().reset_index(drop=True)
-    for i, cls in enumerate(model.classes_):
-        result[cls] = probas[:, i]
-    return result
-
-
-def probability_bar_chart(proba: dict) -> go.Figure:
-    labels = [CLASS_DISPLAY[c] for c in CLASS_LABELS if c in proba]
-    values = [proba[c] for c in CLASS_LABELS if c in proba]
-    colors = [CLASS_COLORS[c] for c in CLASS_LABELS if c in proba]
-    fig = go.Figure(go.Bar(
-        x=values, y=labels, orientation="h",
-        marker_color=colors,
-        text=[f"{v:.1%}" for v in values],
-        textposition="outside",
-    ))
-    fig.update_layout(
-        xaxis=dict(range=[0, 1], tickformat=".0%"),
-        yaxis=dict(autorange="reversed"),
-        height=200, margin=dict(l=10, r=60, t=10, b=10),
-        showlegend=False,
-    )
-    return fig
-
-
-def evolution_chart(evolutions: dict[str, pd.DataFrame], goal_minutes: list[int]) -> go.Figure:
-    fig = go.Figure()
-    line_styles = {"XGBoost": "solid", "Random Forest": "dash"}
-    for model_name, df in evolutions.items():
-        for cls in CLASS_LABELS:
-            if cls not in df.columns:
-                continue
-            fig.add_trace(go.Scatter(
-                x=df["minute"], y=df[cls],
-                name=f"{CLASS_DISPLAY[cls]} ({model_name})",
-                mode="lines",
-                line=dict(color=CLASS_COLORS[cls], dash=line_styles.get(model_name, "solid")),
-                legendgroup=cls,
-            ))
-    for m in goal_minutes:
-        fig.add_vline(x=m, line_dash="dot", line_color="gray", opacity=0.5)
-    fig.add_hline(y=1/3, line_dash="dash", line_color="lightgray",
-                  annotation_text="base", annotation_position="right")
-    fig.update_layout(
-        xaxis_title="Minuto", yaxis_title="Probabilidad",
-        yaxis=dict(range=[0, 1], tickformat=".0%"),
-        height=420, margin=dict(l=10, r=10, t=30, b=10),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    )
-    return fig
-
-
-def timeline_chart(events: pd.DataFrame, selected_minute: int) -> go.Figure:
-    goal_events = events[events["shot_outcome"] == "Goal"]
-    fig = go.Figure()
-    for team, group in events.groupby("team_name"):
-        fig.add_trace(go.Scatter(
-            x=group["minute"], y=[team] * len(group),
-            mode="markers",
-            marker=dict(size=5, opacity=0.3),
-            name=team, showlegend=True,
-        ))
-    if not goal_events.empty:
-        for team, group in goal_events.groupby("team_name"):
-            fig.add_trace(go.Scatter(
-                x=group["minute"], y=[team] * len(group),
-                mode="markers",
-                marker=dict(size=14, symbol="star", opacity=1.0),
-                name=f"Gol — {team}", showlegend=True,
-            ))
-    fig.add_vline(x=selected_minute, line_color="red", line_width=2,
-                  annotation_text=f"min {selected_minute}", annotation_position="top")
-    fig.update_layout(
-        xaxis=dict(range=[0, 91], title="Minuto"),
-        height=180, margin=dict(l=10, r=10, t=10, b=10),
-        yaxis_title="",
-    )
-    return fig
-
-
-# ---------------------------------------------------------------------------
-# Page setup
+# Page config
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Predictor de Resultados de Fútbol",
-    page_icon="⚽",
+    page_title="Predictor de Resultados de Futbol",
+    page_icon=":soccer:",
     layout="wide",
 )
 
-st.title("⚽ Predictor de Resultados de Fútbol")
-st.caption("TFM — UNIR Máster en Inteligencia Artificial")
+st.title("Predictor de Resultados de Futbol en Vivo")
 
-models = load_models()
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+models    = load_models()
 features_df = load_features()
-metadata = load_metadata()
+metadata  = load_metadata()
 timeline_df = load_timeline()
 
 if not models:
-    st.error("No se han encontrado modelos en app/data/. Ejecuta `python app/prepare_app_data.py`.")
+    st.error("No se encontraron modelos en app/data/. Ejecuta `python app/prepare_app_data.py`.")
     st.stop()
 
 available_models = list(models.keys())
 
 # ---------------------------------------------------------------------------
-# Sidebar — game selection (shared across all tabs)
+# Game + model selectors — in the main window
 # ---------------------------------------------------------------------------
-with st.sidebar:
-    st.header("Selección de partido")
-    competitions = sorted(metadata["competition_name"].unique())
-    competition = st.selectbox("Competición", competitions)
+sel_col1, sel_col2, sel_col3, sel_col4 = st.columns([2, 1, 3, 1])
 
+with sel_col1:
+    competitions = sorted(metadata["competition_name"].unique())
+    competition  = st.selectbox("Competicion", competitions, label_visibility="visible")
+
+with sel_col2:
     seasons = sorted(
         metadata[metadata["competition_name"] == competition]["season_name"].unique(),
         reverse=True,
     )
     season = st.selectbox("Temporada", seasons)
 
-    mask = (metadata["competition_name"] == competition) & (metadata["season_name"] == season)
+with sel_col3:
+    mask = (
+        (metadata["competition_name"] == competition)
+        & (metadata["season_name"] == season)
+    )
     matches_meta = metadata[mask].copy()
     matches_meta["label"] = (
         matches_meta["home_team"] + " vs " + matches_meta["away_team"]
-        + "  (" + matches_meta["final_score_home"].astype(str)
-        + "–" + matches_meta["final_score_away"].astype(str) + ")"
+        + "  (" + matches_meta["final_score_home"].astype(int).astype(str)
+        + "-"   + matches_meta["final_score_away"].astype(int).astype(str) + ")"
     )
-    match_labels = matches_meta.set_index("match_id")["label"].to_dict()
-    match_id = st.selectbox("Partido", options=list(match_labels.keys()),
-                            format_func=lambda x: match_labels[x])
+    match_id = st.selectbox(
+        "Partido",
+        options=matches_meta["match_id"].tolist(),
+        format_func=lambda x: matches_meta.set_index("match_id").loc[x, "label"],
+    )
 
-selected_meta = matches_meta[matches_meta["match_id"] == match_id].iloc[0]
-home_team = selected_meta["home_team"]
-away_team = selected_meta["away_team"]
-final_result = selected_meta["final_result"]
+with sel_col4:
+    model_name = st.selectbox("Modelo", available_models)
 
-st.subheader(f"{home_team}  vs  {away_team}")
+model = models[model_name]
+
+st.divider()
+
+# ---------------------------------------------------------------------------
+# Match context
+# ---------------------------------------------------------------------------
+selected   = matches_meta[matches_meta["match_id"] == match_id].iloc[0]
+home_team  = selected["home_team"]
+away_team  = selected["away_team"]
+final_result = selected["final_result"]
+score_h    = int(selected["final_score_home"])
+score_a    = int(selected["final_score_away"])
+
+match_features = features_df[features_df["match_id"] == match_id].sort_values("minute")
+match_events   = timeline_df[timeline_df["match_id"] == match_id]
+
+# Match header
+h_col, s_col, a_col = st.columns([5, 2, 5])
+with h_col:
+    st.markdown(f"<h2 style='margin-bottom:0'>{home_team}</h2>", unsafe_allow_html=True)
+with s_col:
+    st.markdown(
+        f"<h2 style='text-align:center;margin-bottom:0'>{score_h} – {score_a}</h2>",
+        unsafe_allow_html=True,
+    )
+with a_col:
+    st.markdown(
+        f"<h2 style='text-align:right;margin-bottom:0'>{away_team}</h2>",
+        unsafe_allow_html=True,
+    )
 st.caption(
-    f"Resultado final: **{CLASS_DISPLAY.get(final_result, final_result)}**  "
-    f"({selected_meta['final_score_home']}–{selected_meta['final_score_away']})"
+    f"Resultado final: **{CLASS_DISPLAY.get(final_result, final_result)}**"
+    f"&nbsp;·&nbsp;{competition}&nbsp;·&nbsp;{season}"
 )
-
-match_events = timeline_df[timeline_df["match_id"] == match_id]
-goal_minutes = match_events[match_events["shot_outcome"] == "Goal"]["minute"].tolist()
 
 # ---------------------------------------------------------------------------
 # Tabs
 # ---------------------------------------------------------------------------
-tab1, tab2, tab3 = st.tabs(["🔍 Explorador de partido", "📈 Evolución", "🎮 Simulador"])
+tab_exp, tab_evo = st.tabs(["Explorador", "Evolucion de probabilidades"])
 
-# ── Tab 1: Explorer ─────────────────────────────────────────────────────────
-with tab1:
-    col_ctrl, col_main = st.columns([1, 3])
-    with col_ctrl:
-        model_name_1 = st.radio("Modelo", available_models, key="model_tab1")
-        minute = st.slider("Minuto", min_value=1, max_value=90, value=45, key="minute_tab1")
+# ═══════════════════════════════════════════════════════════════════════════
+# TAB 1 — Explorador
+# ═══════════════════════════════════════════════════════════════════════════
+with tab_exp:
 
-    with col_main:
-        st.plotly_chart(timeline_chart(match_events, minute),
-                        use_container_width=True, config={"displayModeBar": False})
+    minute = st.slider("Minuto", min_value=1, max_value=90, value=45)
 
-        proba = predict_minute(models[model_name_1], features_df, match_id, minute)
-        if proba:
-            st.plotly_chart(probability_bar_chart(proba),
-                            use_container_width=True, config={"displayModeBar": False})
-        else:
-            st.warning(f"No hay datos para el minuto {minute} en este partido.")
+    # ── Timeline ─────────────────────────────────────────────────────────
+    goals  = match_events[match_events["shot_outcome"] == "Goal"]
+    shots  = match_events[
+        (match_events["event_type"] == "Shot")
+        & (match_events["shot_outcome"] != "Goal")
+    ]
 
-# ── Tab 2: Evolution ────────────────────────────────────────────────────────
-with tab2:
-    selected_models_2 = st.multiselect(
-        "Modelos a comparar", available_models, default=available_models, key="models_tab2"
-    )
-    if selected_models_2:
-        evolutions = {
-            name: predict_all_minutes(models[name], features_df, match_id)
-            for name in selected_models_2
-        }
-        st.plotly_chart(evolution_chart(evolutions, goal_minutes),
-                        use_container_width=True)
-        if len(available_models) == 1 and "Random Forest" not in available_models:
-            st.info(
-                "El modelo Random Forest no está disponible en este entorno. "
-                "Consulta app/prepare_app_data.py para activarlo localmente."
-            )
-    else:
-        st.info("Selecciona al menos un modelo.")
+    fig_tl = go.Figure()
 
-# ── Tab 3: Simulator ─────────────────────────────────────────────────────────
-with tab3:
-    st.markdown(
-        "Ajusta el estado del partido manualmente. Los valores restantes se inicializan "
-        "con la mediana del conjunto de test como estado neutro."
-    )
+    # Centre line
+    fig_tl.add_shape(type="line", x0=1, x1=90, y0=0, y1=0,
+                     line=dict(color="#cccccc", width=2))
+    # Half-time
+    fig_tl.add_vline(x=45, line_dash="dot", line_color="#bbbbbb", opacity=0.7,
+                     annotation_text="MT", annotation_position="top",
+                     annotation_font=dict(color="#aaaaaa", size=11))
 
-    medians = features_df[FEATURE_COLS].median()
+    def _scatter(x, y_val, symbol, size, color, opacity, name, hover):
+        return go.Scatter(
+            x=x, y=[y_val] * len(x), mode="markers",
+            marker=dict(size=size, color=color, opacity=opacity, symbol=symbol),
+            name=name, hovertemplate=hover + "<extra></extra>",
+        )
 
-    col1, col2, col3 = st.columns(3)
+    # Shots (faded triangles)
+    home_shots = shots[shots["is_home"] == True]["minute"]
+    away_shots = shots[shots["is_home"] == False]["minute"]
+    if not home_shots.empty:
+        fig_tl.add_trace(_scatter(home_shots, 0.4, "triangle-up",   8,
+                                   CLASS_COLORS["home_win"], 0.35,
+                                   f"Tiro — {home_team}", "min %{x}  Tiro local"))
+    if not away_shots.empty:
+        fig_tl.add_trace(_scatter(away_shots, -0.4, "triangle-down", 8,
+                                   CLASS_COLORS["away_win"], 0.35,
+                                   f"Tiro — {away_team}", "min %{x}  Tiro visitante"))
 
-    with col1:
-        st.subheader("Marcador y tiempo")
-        goals_home = st.number_input("Goles local", 0, 10, 0, key="sim_gh")
-        goals_away = st.number_input("Goles visitante", 0, 10, 0, key="sim_ga")
-        sim_minute = st.slider("Minuto actual", 1, 90, 45, key="sim_min")
-        is_womens = st.toggle("Competición femenina", value=False, key="sim_fem")
+    # Goals (large stars + minute label)
+    home_goals = goals[goals["is_home"] == True]
+    away_goals = goals[goals["is_home"] == False]
 
-    with col2:
-        st.subheader("Producción ofensiva")
-        shots_home = st.slider("Tiros local", 0, 30, int(medians.get("shots_home", 5)), key="sim_sh")
-        shots_away = st.slider("Tiros visitante", 0, 30, int(medians.get("shots_away", 5)), key="sim_sa")
-        xg_home = st.slider("xG local", 0.0, 5.0, float(round(medians.get("xg_home", 0.5), 1)),
-                             step=0.1, key="sim_xgh")
-        xg_away = st.slider("xG visitante", 0.0, 5.0, float(round(medians.get("xg_away", 0.5), 1)),
-                             step=0.1, key="sim_xga")
-
-    with col3:
-        st.subheader("Control del juego")
-        possession = st.slider("Posesión local (%)", 0, 100, 50, key="sim_poss") / 100
-        players_diff = st.slider("Diferencial de jugadores (local − visitante)", -3, 3, 0,
-                                 key="sim_pd")
-
-    # Build feature vector from medians + user overrides
-    sim_vector = medians.copy()
-    sim_vector["goals_home"] = goals_home
-    sim_vector["goals_away"] = goals_away
-    sim_vector["shots_home"] = shots_home
-    sim_vector["shots_away"] = shots_away
-    sim_vector["xg_home"] = xg_home
-    sim_vector["xg_away"] = xg_away
-    sim_vector["possession_home"] = possession
-    sim_vector["players_diff"] = players_diff
-    sim_vector["minutes_remaining"] = 90 - sim_minute
-    sim_vector["is_womens"] = int(is_womens)
-    # Derived features
-    sim_vector["score_diff"] = goals_home - goals_away
-    sim_vector["total_goals"] = goals_home + goals_away
-    sim_vector["xg_diff"] = xg_home - xg_away
-    sim_vector["shots_diff"] = shots_home - shots_away
-    sim_vector["goals_minus_xg_home"] = goals_home - xg_home
-    sim_vector["goals_minus_xg_away"] = goals_away - xg_away
-    sim_vector["xg_per_shot_home"] = (xg_home / shots_home) if shots_home > 0 else 0.0
-    sim_vector["xg_per_shot_away"] = (xg_away / shots_away) if shots_away > 0 else 0.0
-
-    sim_df = pd.DataFrame([sim_vector[FEATURE_COLS]])
-
-    st.divider()
-    st.subheader("Predicción")
-    sim_cols = st.columns(len(available_models))
-    for col, model_name in zip(sim_cols, available_models):
-        with col:
-            st.markdown(f"**{model_name}**")
-            proba_sim = dict(zip(
-                models[model_name].classes_,
-                models[model_name].predict_proba(sim_df)[0],
+    for df_g, y_val, pos, cls_key, team in [
+        (home_goals,  0.8, "top center",    "home_win", home_team),
+        (away_goals, -0.8, "bottom center", "away_win", away_team),
+    ]:
+        if not df_g.empty:
+            fig_tl.add_trace(go.Scatter(
+                x=df_g["minute"], y=[y_val] * len(df_g),
+                mode="markers+text",
+                marker=dict(size=22, color=CLASS_COLORS[cls_key], symbol="star"),
+                text=[f"{m}'" for m in df_g["minute"]],
+                textposition=pos,
+                textfont=dict(size=11, color=CLASS_COLORS[cls_key]),
+                name=f"Gol — {team}",
+                hovertemplate=f"min %{{x}}  Gol {team}<extra></extra>",
             ))
-            st.plotly_chart(
-                probability_bar_chart(proba_sim),
-                use_container_width=True,
-                config={"displayModeBar": False},
-                key=f"sim_chart_{model_name}",
+
+    # Team labels on left
+    for y_val, team, cls_key in [
+        ( 0.8, home_team, "home_win"),
+        (-0.8, away_team, "away_win"),
+    ]:
+        fig_tl.add_annotation(
+            x=-0.5, y=y_val, text=f"<b>{team}</b>", showarrow=False,
+            xanchor="right", font=dict(color=CLASS_COLORS[cls_key], size=12),
+        )
+
+    # Selected minute line
+    fig_tl.add_vline(x=minute, line_color="crimson", line_width=2,
+                     annotation_text=f"  min {minute}",
+                     annotation_position="top right",
+                     annotation_font=dict(color="crimson", size=12))
+
+    fig_tl.update_layout(
+        height=210,
+        margin=dict(l=140, r=30, t=30, b=30),
+        xaxis=dict(range=[0, 92], tickvals=[1, 15, 30, 45, 60, 75, 90],
+                   title="Minuto", showgrid=False, zeroline=False),
+        yaxis=dict(range=[-1.3, 1.3], visible=False),
+        plot_bgcolor="white", paper_bgcolor="white",
+        legend=dict(orientation="h", yanchor="top", y=-0.18,
+                    xanchor="center", x=0.5, font=dict(size=11)),
+    )
+    st.plotly_chart(fig_tl, use_container_width=True, config={"displayModeBar": False})
+
+    # ── Event list ────────────────────────────────────────────────────────
+    SHOT_OUTCOME_LABEL = {
+        "Goal":          ("⚽", "Gol"),
+        "Saved":         ("🧤", "Tiro parado"),
+        "Saved To Post": ("🧤", "Tiro parado en el palo"),
+        "Blocked":       ("🛡️", "Tiro bloqueado"),
+        "Post":          ("🏁", "Tiro al palo"),
+        "Off T":         ("↗️", "Tiro fuera"),
+        "Wayward":       ("↗️", "Tiro desviado"),
+    }
+
+    key_events = match_events[match_events["event_type"] == "Shot"].copy()
+    key_events["icon"]        = key_events["shot_outcome"].map(
+        lambda o: SHOT_OUTCOME_LABEL.get(o, ("·", o))[0]
+    )
+    key_events["descripcion"] = key_events["shot_outcome"].map(
+        lambda o: SHOT_OUTCOME_LABEL.get(o, ("·", o))[1]
+    )
+    key_events["equipo"] = key_events["team_name"]
+    key_events = key_events[["minute", "icon", "descripcion", "equipo"]].sort_values("minute")
+    key_events.columns = ["Minuto", "", "Evento", "Equipo"]
+
+    visible = key_events[key_events["Minuto"] <= minute]
+    past, future = visible, key_events[key_events["Minuto"] > minute]
+
+    with st.expander(f"Eventos del partido — mostrando hasta el minuto {minute} "
+                     f"({len(visible)} de {len(key_events)})", expanded=True):
+        if visible.empty:
+            st.caption("Sin tiros registrados hasta este minuto.")
+        else:
+            def _style_row(row):
+                is_home = row["Equipo"] == home_team
+                bg = "#e8f0fb" if is_home else "#fce8e8"
+                return [f"background-color:{bg}"] * len(row)
+
+            styled = (
+                visible.style
+                .apply(_style_row, axis=1)
+                .set_properties(**{"font-size": "13px"})
+                .hide(axis="index")
             )
+            st.dataframe(styled, use_container_width=True, height=220)
+
+    # ── Probability at selected minute ────────────────────────────────────
+    st.markdown(f"#### Prediccion en el minuto {minute}")
+
+    row = match_features[match_features["minute"] == minute]
+    if row.empty:
+        st.warning(f"Sin datos para el minuto {minute}.")
+    else:
+        proba = predict_proba_named(model, row[FEATURE_COLS])
+        predicted = max(proba, key=proba.get)
+
+        # Stacked bar
+        fig_pb = go.Figure()
+        for cls in CLASS_LABELS:
+            p = proba.get(cls, 0.0)
+            fig_pb.add_trace(go.Bar(
+                y=[""], x=[p], orientation="h",
+                marker_color=CLASS_COLORS[cls],
+                name=CLASS_DISPLAY[cls],
+                text=f"{p:.0%}" if p >= 0.10 else "",
+                textposition="inside", insidetextanchor="middle",
+                textfont=dict(color="white", size=14, family="Arial Black"),
+                hovertemplate=f"{CLASS_DISPLAY[cls]}: {p:.1%}<extra></extra>",
+            ))
+        fig_pb.update_layout(
+            barmode="stack", height=68,
+            margin=dict(l=0, r=0, t=0, b=0),
+            xaxis=dict(visible=False, range=[0, 1]),
+            yaxis=dict(visible=False),
+            showlegend=False,
+            plot_bgcolor="white", paper_bgcolor="white",
+        )
+        st.plotly_chart(fig_pb, use_container_width=True,
+                        config={"displayModeBar": False})
+
+        # Metric cards
+        m1, m2, m3 = st.columns(3)
+        for col, cls in zip([m1, m2, m3], CLASS_LABELS):
+            p = proba.get(cls, 0.0)
+            col.metric(
+                label=CLASS_DISPLAY[cls],
+                value=f"{p:.1%}",
+                delta="Prediccion" if cls == predicted else None,
+                delta_color="off",
+            )
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TAB 2 — Evolucion
+# ═══════════════════════════════════════════════════════════════════════════
+with tab_evo:
+
+    # Compute probabilities for all 90 minutes
+    all_probas = [
+        predict_proba_named(model, match_features[match_features["minute"] == m][FEATURE_COLS])
+        for m in match_features["minute"]
+    ]
+    evo = pd.DataFrame(all_probas)
+    evo["minute"] = match_features["minute"].values
+
+    goal_minutes = match_events[match_events["shot_outcome"] == "Goal"]["minute"].tolist()
+
+    fig_evo = go.Figure()
+    for cls in CLASS_LABELS:
+        if cls not in evo.columns:
+            continue
+        fig_evo.add_trace(go.Scatter(
+            x=evo["minute"], y=evo[cls],
+            name=CLASS_DISPLAY[cls],
+            mode="lines",
+            line=dict(color=CLASS_COLORS[cls], width=2.5),
+            hovertemplate=f"{CLASS_DISPLAY[cls]}: %{{y:.1%}}<extra></extra>",
+        ))
+
+    for gm in goal_minutes:
+        fig_evo.add_vline(x=gm, line_dash="dot", line_color="#aaaaaa", opacity=0.6)
+    fig_evo.add_hline(y=1 / 3, line_dash="dash", line_color="#dddddd",
+                      annotation_text="base", annotation_position="right",
+                      annotation_font=dict(color="#bbbbbb", size=10))
+
+    fig_evo.update_layout(
+        height=420,
+        margin=dict(l=10, r=20, t=20, b=20),
+        xaxis=dict(title="Minuto", range=[1, 90],
+                   tickvals=[1, 15, 30, 45, 60, 75, 90], showgrid=False),
+        yaxis=dict(title="Probabilidad", tickformat=".0%",
+                   range=[0, 1], showgrid=True, gridcolor="#f0f0f0"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                    xanchor="right", x=1, font=dict(size=12)),
+        plot_bgcolor="white", paper_bgcolor="white",
+    )
+    st.plotly_chart(fig_evo, use_container_width=True,
+                    config={"displayModeBar": False})
+
+    st.caption(
+        "Las lineas verticales grises punteadas marcan los goles del partido. "
+        "La linea horizontal indica la probabilidad de referencia (1/3 para tres clases equiprobables)."
+    )

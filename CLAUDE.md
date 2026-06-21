@@ -102,7 +102,10 @@ Hyperparameter tuning via `RandomizedSearchCV` (12 candidates each), scored by M
 **File structure:**
 ```
 app/
-├── app.py                # full Streamlit app (3 tabs)
+├── app.py                # Page 1: Explorador de partido
+├── data_loader.py        # shared cached loading (models, parquet files, constants)
+├── pages/
+│   └── Simulador.py      # Page 2: Simulador de estado de partido
 ├── prepare_app_data.py   # run once locally to generate app/data/
 └── data/                 # committed to git (small files only)
     ├── features_test.parquet
@@ -111,7 +114,27 @@ app/
     └── xgboost.pkl
 ```
 
-**Game scope:** only test-set matches (seasons 2020–2025, 692 matches). Game selector cascades: Competition → Season → Match.
+**Local development:** `streamlit run app/app.py` — auto-reloads on file save. No push needed.
+
+**Game scope:** only test-set matches (seasons 2020–2025). Game selector in sidebar cascades Competition → Season → Match.
+
+### Page 1 — Explorador de partido (`app.py`)
+Timeline + current minute prediction + full-match evolution chart on a single page. Sidebar: game selector + model radio.
+
+Layout:
+- **Header**: home team | score | away team + result caption
+- **Timeline** (full width): single horizontal axis, home events above (blue), away below (red). Goals as large stars with minute label. Shots as small triangles. Half-time dashed line. Selected minute as red vertical line.
+- **Minute slider** (full width, drives both timeline marker and prediction panel)
+- **Two columns**:
+  - Left: stacked bar chart (3 colors) + three metric cards with exact probabilities
+  - Right: line chart of P(home_win), P(draw), P(away_win) across all 90 minutes; goal events as dotted vertical lines; selected minute as dashed red line
+
+### Page 2 — Simulador (`pages/Simulador.py`)
+Match state sliders → real-time probability prediction. Completely separate from the Explorador.
+
+Controls (3 columns): score + time | offensive production | ball control.
+Feature vector built from user inputs; all other features set to dataset medians as neutral baseline.
+Both available models shown side by side. Each shows the same stacked bar + metric card layout as the Explorador.
 
 ### Tab 1 — Explorador de partido
 - Sidebar: game selector, model selector (XGBoost / Random Forest), minute slider (1–90)

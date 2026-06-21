@@ -13,4 +13,3 @@ ipykernel>=6.29
 # Web app
 streamlit>=1.35.0
 plotly>=5.20.0
-lz4>=4.0.0
