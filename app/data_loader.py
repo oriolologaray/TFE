@@ -38,7 +38,7 @@ FEATURE_COLS = [
 @st.cache_resource
 def load_models() -> dict:
     models = {}
-    for name, filename in [("XGBoost", "xgboost.pkl"), ("Random Forest", "random_forest.pkl")]:
+    for name, filename in [("XGBoost", "xgboost.pkl"), ("Random Forest", "random_forest.pkl"), ("SVM Lineal", "svm_linear_calibrated.pkl")]:
         path = DATA_DIR / filename
         if path.exists():
             models[name] = joblib.load(path)

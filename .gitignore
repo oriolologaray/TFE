@@ -28,6 +28,4 @@ datasets/match_minute_features.csv
 .claude/
 models/
 
-# App deployment data — parquet files and xgboost.pkl are committed (small)
-# random_forest.pkl excluded: too large for git (use Git LFS or local only)
-app/data/random_forest.pkl
+# App deployment data — parquet files and model .pkl are committed
