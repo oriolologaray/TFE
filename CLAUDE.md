@@ -102,10 +102,11 @@ Hyperparameter tuning via `RandomizedSearchCV` (12 candidates each), scored by M
 **File structure:**
 ```
 app/
-├── app.py                # Page 1: Explorador de partido
+├── app.py                # entry point: st.navigation([Dashboard, Simulador])
 ├── data_loader.py        # shared cached loading (models, parquet files, constants)
 ├── pages/
-│   └── Simulador.py      # Page 2: Simulador de estado de partido
+│   ├── Dashboard_de_partido.py   # game selector + timeline + prediction + evolution
+│   └── Simulador.py              # match state sliders → real-time prediction
 ├── prepare_app_data.py   # run once locally to generate app/data/
 └── data/                 # committed to git (small files only)
     ├── features_test.parquet

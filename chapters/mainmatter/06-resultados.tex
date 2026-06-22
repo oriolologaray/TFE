@@ -1,2 +1,113 @@
 \chapter{Resultados}
-Recoge los resultados principales. Puedes incluir figuras, tablas, ecuaciones y referencias bibliográficas, por ejemplo \cite{knuth1984texbook}.
+
+\section{Síntesis de los principales hallazgos}
+
+El conjunto de resultados obtenidos confirma la viabilidad del enfoque propuesto: es posible predecir la probabilidad de victoria local, empate y victoria visitante a partir de métricas de partido acumuladas minuto a minuto, con un rendimiento claramente superior al de cualquier estrategia trivial.
+
+En el minuto 15, cuando el partido apenas ha comenzado y las diferencias entre equipos son todavía pequeñas, los modelos basados en árboles se sitúan en torno al 52--54\,\% de precisión. Esta cifra ya supera la línea base de predicción sistemática de la clase mayoritaria (42,9\,\%), lo que indica que incluso en los primeros compases del encuentro las variables construidas contienen información útil. Sin embargo, parece que los modelos son demasiado susceptibles a la variabilidad inicial. Por ejemplo, un disparo a puerta del equipo local puede decantar la balanza de probabilidades más a su favor de lo que se esperaría. A medida que el partido avanza y las métricas acumuladas reflejan con mayor fidelidad el desarrollo del juego, el rendimiento mejora de forma consistente: en el minuto 60 Random Forest supera el umbral de referencia del 70\,\% con un 70,4\,\%, y ambos modelos basados en árboles alcanzan más del 92\,\% al final del tiempo reglamentario, cuando el marcador y las estadísticas acumuladas determinan ya de forma casi directa el resultado final (recordamos que no tenemos en cuenta el tiempo de añadido en el análisis). Esta progresión puede observarse en la figura~\ref{fig:comparacion_modelos}.
+
+Entre los tres modelos evaluados, XGBoost ha sido seleccionado como modelo principal por combinar la mayor precisión global (65,4\,\%) con la menor pérdida logarítmica (0,753). La pérdida logarítmica evalúa la calidad de las probabilidades estimadas, no únicamente la clase predicha, y resulta especialmente relevante para el prototipo desarrollado, donde el usuario visualiza la distribución completa de probabilidades. Random Forest constituye una alternativa muy competitiva: aunque obtiene un \textit{accuracy} global ligeramente inferior (65,0\,\%), su F1-score macro es el mejor de los tres modelos (63,3\,\%) y presenta un comportamiento más equilibrado entre clases, con un \textit{recall} de la clase empate del 52\,\% frente al 44\,\% de XGBoost. El SVM lineal, incluido como referencia comparativa, cumple su función al evidenciar los límites de un clasificador lineal sobre este problema, pero queda descartado como opción principal por su escasa capacidad para identificar empates (3\,\% de \textit{recall}).
+
+\section{Comparación con el estado del arte}
+
+La comparación de los resultados obtenidos con los trabajos revisados en el estado del arte exige tener en cuenta las diferencias en la formulación del problema, los datos utilizados y el tipo de predicción que realiza cada sistema. La tabla~\ref{tab:comparacion_soa} recoge esta comparación de forma estructurada.
+
+\begin{table}[H]
+    \centering
+    \scriptsize
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{|p{2.8cm}|p{1.8cm}|p{2.2cm}|X|}
+        \hline
+        \textbf{Estudio}                              & \textbf{Tipo} & \textbf{Resultado reportado} & \textbf{Comparación con este TFM}                                                                                               \\
+        \hline
+        Baboota y Kaur (2019)                         &
+        Prepartido                                    &
+        65--70\,\% de precisión                       &
+        Igualamos su rango de precisión en predicción intrapartido, sin estadísticas históricas previas al encuentro. Sin embargo, nuestro modelo opera con menos información disponible.                                              \\
+        \hline
+        Gao y Kowalczyk (2019)                        &
+        Prepartido                                    &
+        $>$80\,\% de precisión                        &
+        El tenis presenta menos varianza y una distribución de clases binaria; no es directamente comparable. Confirma que los modelos de ensamblado son eficaces cuando las variables describen bien el rendimiento deportivo.        \\
+        \hline
+        Horvat y Job (2020)                           &
+        Revisión                                      &
+        Sin métrica única                             &
+        Contextualiza nuestros resultados dentro del rango habitual en la literatura. La clasificación multiclase en fútbol es reconocida como un problema de alta dificultad.                                                         \\
+        \hline
+        Hvattum y Arntzen (2010)                      &
+        Prepartido                                    &
+        Mejora sobre modelos estáticos                &
+        El principio de actualización dinámica (más información disponible implica mejor predicción) se refleja en nuestra curva temporal: la precisión crece del 53\,\% en el minuto 15 al 93\,\% en el minuto 90.                    \\
+        \hline
+        Decroos et al.\ (2019)                        &
+        Intrapartido                                  &
+        Métrica VAEP (no clasificación)               &
+        Utilizan la misma fuente de datos (StatsBomb Open Data). Su enfoque valora acciones individuales; el nuestro las agrega en métricas temporales. Los enfoques son complementarios y validan mutuamente la riqueza de la fuente. \\
+        \hline
+        Zhang et al.\ (2022)                          &
+        Intrapartido                                  &
+        Supera a ML clásico                           &
+        El modelo LSTM fue considerado y descartado. Nuestra agregación tabular obtiene resultados competitivos con mayor interpretabilidad y menor complejidad de diseño y validación.                                                \\
+        \hline
+        Simpson et al.\ (2022)                        &
+        Intrapartido                                  &
+        Métrica \textit{poss-util} (no clasificación) &
+        Misma fuente de datos. Sin comparación directa de precisión. Confirma la riqueza predictiva de los eventos de StatsBomb para modelar la dinámica del partido.                                                                  \\
+        \hline
+        Wang et al.\ (2025)                           &
+        Prepartido                                    &
+        Supera a modelos de referencia                &
+        Estado del arte en predicción con datos históricos de jugadores (WyScout). Opera antes del partido; no compite directamente con la predicción dinámica intrapartido de este TFM.                                               \\
+        \hline
+        Walsh y Joshi (2024)                          &
+        Metodológico                                  &
+        Modelo calibrado: $+34{,}69$\,\% de retorno   &
+        Justifica empíricamente la elección de XGBoost como modelo principal: su menor pérdida logarítmica indica probabilidades mejor calibradas, criterio decisivo para un sistema orientado a mostrar distribuciones al usuario.    \\
+        \hline
+    \end{tabularx}
+    \caption{Comparación de los resultados obtenidos con los trabajos revisados en el estado del arte}
+    \label{tab:comparacion_soa}
+\end{table}
+
+El análisis comparativo revela que el sistema desarrollado se sitúa en el mismo rango de precisión que los modelos prepartido del estado del arte, pero resuelve un problema más exigente. Baboota y Kaur (2019) obtienen entre un 65 y un 70\,\% de precisión utilizando estadísticas históricas de los equipos antes del encuentro, es decir, con información completa sobre el rendimiento pasado. Los modelos aquí evaluados alcanzan un rendimiento equivalente a partir únicamente de los eventos generados durante el propio partido, en acumulación desde el minuto~1. Que el resultado sea comparable supone, en este contexto, un resultado positivo.
+
+La comparación con los enfoques basados en información temporal y dinámica del juego refuerza las decisiones de diseño adoptadas. Los modelos secuenciales como AS-LSTM \citep{zhang2022lstm} y Seq2Event \citep{simpson2022seq2event} demuestran que los datos de eventos contienen dependencias temporales que una arquitectura profunda puede explotar. Sin embargo, nuestra propuesta de agregar esos mismos eventos en métricas minuto a minuto logra resultados competitivos con una menor complejidad de diseño y mayor interpretabilidad, lo que resulta adecuado para el objetivo de un prototipo funcional y explicable. La decisión de no incluir un modelo LSTM queda, por tanto, respaldada por los resultados obtenidos.
+
+Por último, la elección de XGBoost como modelo principal frente a Random Forest ilustra directamente la relevancia del argumento de \cite{walsh2024calibration}: cuando el sistema está orientado a mostrar probabilidades al usuario, la calidad de las estimaciones probabilísticas es tan importante como la clase predicha. La diferencia de pérdida logarítmica entre ambos modelos (0,753 frente a 0,772) puede parecer pequeña en términos absolutos, pero tiene implicaciones directas sobre la coherencia de las probabilidades mostradas en la interfaz del prototipo.
+
+\section{Interpretación crítica de las métricas}
+
+\subsection{Diferencias de rendimiento entre Random Forest y XGBoost}
+
+A pesar de que XGBoost obtiene mayor precisión global, Random Forest logra un F1-score macro superior (63,3\,\% frente a 62,7\,\%). Esta aparente contradicción responde a las configuraciones seleccionadas durante la búsqueda de hiperparámetros, que optimizó el F1-score macro como criterio principal.
+
+Random Forest fue configurado con \texttt{class\_weight='balanced'}, lo que penaliza en mayor medida los errores en las clases minoritarias. Esta configuración impulsa la detección de empates: el \textit{recall} de esta clase alcanza el 52\,\% en Random Forest frente al 44\,\% de XGBoost (tabla~\ref{tab:recall_por_clase}). Dado que el F1-score macro promedia el rendimiento de las tres clases con el mismo peso, la mejora en empates se traduce directamente en un mejor resultado global de esta métrica.
+
+XGBoost, por su parte, incorpora regularización interna (\texttt{gamma}, \texttt{reg\_lambda}) y opera con una tasa de aprendizaje baja, lo que favorece una mejor calibración de las probabilidades, pero no prioriza el equilibrio entre clases de la misma manera. En consecuencia, XGBoost asigna mayor probabilidad a las clases mayoritarias (victoria local y visitante), lo que eleva su \textit{accuracy} global pero reduce su sensibilidad hacia la clase empate. Los dos modelos optimizan criterios distintos y no son intercambiables: Random Forest es preferible cuando se valora el equilibrio entre clases, mientras que XGBoost es más adecuado cuando el criterio es la precisión global y la calidad de las probabilidades estimadas.
+
+\subsection{Dificultad estructural en la predicción de empates}
+
+La clase empate no es simplemente la clase minoritaria del problema (23,0\,\% de los partidos), sino que ocupa una posición especial y compleja en la predicción de resultados de partidos. El empate corresponde a situaciones en las que el marcador y las métricas de ambos equipos son similares, lo que genera un solapamiento significativo con las victorias ajustadas.
+
+Esta dificultad tiene además una dimensión temporal: un partido que termina 0-0 o 1-1 puede haber exhibido exactamente el mismo estado acumulado en el minuto 89 que uno que acaba con un gol en el tiempo de descuento. El modelo no dispone de información para distinguir estos casos antes de que ocurra el evento diferenciador. Esta fragilidad es una característica intrínseca del fútbol, un deporte de escaso margen de gol, y no un defecto del sistema.
+
+El resultado del SVM lineal ilustra esta limitación de forma especialmente clara: con solo un 3\,\% de \textit{recall} en la clase empate, demuestra que la frontera entre el empate y las victorias no es separable mediante un hiperplano lineal en el espacio de las 48 variables construidas. La necesidad de fronteras no lineales, que los modelos basados en árboles sí pueden aprender, es una de las razones que justifica el uso de métodos \textit{ensemble} para este problema. Este comportamiento es coherente con lo reportado en la literatura revisada, donde el empate aparece como la clase de mayor dificultad en todos los estudios de predicción de resultados de fútbol \citep{baboota2019predictive, horvat2020review}.
+
+\subsection{Interpretación del \textit{accuracy} global en un sistema de predicción dinámica}
+
+El valor de \textit{accuracy} global del 65,4\,\% debe interpretarse en su contexto para evaluar correctamente el rendimiento del sistema. En primer lugar, supone una mejora de 22,5 puntos porcentuales sobre la estrategia trivial de predicción sistemática de la clase mayoritaria (42,9\,\%), lo que confirma que los modelos han aprendido patrones reales a partir de los datos.
+
+En segundo lugar, el \textit{accuracy} global agrega en un único número minutos con contextos de información muy distintos. Los primeros compases del partido, con pocos eventos acumulados y diferencias escasas entre equipos, contienen poca información predictiva y arrastran artificialmente la métrica hacia abajo. El análisis por minuto revela una imagen más matizada: el sistema alcanza el umbral del 70\,\% a partir del minuto 60 en el caso de Random Forest y del 75 en el de XGBoost, lo que es coherente con la dinámica real del fútbol, donde la segunda mitad concentra más goles, más diferencias entre equipos y, por tanto, más información disponible para el modelo.
+
+En tercer lugar, la métrica global no captura la naturaleza esencialmente dinámica del sistema. Un prototipo que muestra «72\,\% de probabilidad de victoria local» en el minuto 70 de un partido que efectivamente termina con victoria local es útil para el usuario independientemente de lo que ocurra en los primeros diez minutos. El valor del sistema reside precisamente en esa actualización continua de las probabilidades a lo largo del encuentro, que ninguna métrica de clasificación global puede reflejar por sí sola.
+
+\section{Cumplimiento de los objetivos}
+
+El grado de cumplimiento de cada objetivo específico se recoge en la tabla~\ref{tab:cumplimiento} del capítulo de Objetivos y metodología. Desde la perspectiva de los resultados obtenidos, cabe añadir las siguientes consideraciones.
+
+El objetivo de alcanzar o aproximarse al 70\,\% de precisión global no se cumple en sentido estricto: el mejor modelo obtiene un 65,4\,\% sobre el conjunto de test completo. Sin embargo, este resultado debe interpretarse en términos temporales: el sistema sí supera ese umbral en la segunda mitad del partido, que es precisamente el tramo donde la predicción resulta más valiosa para los contextos de aplicación previstos. El incumplimiento del objetivo global no refleja, por tanto, un fracaso del enfoque, sino una limitación inherente a los primeros minutos del partido, donde la información disponible no es suficiente para realizar predicciones con esa fiabilidad.
+
+La exclusión del LSTM como alternativa de modelado, planteada inicialmente como posible, queda respaldada por los resultados: los modelos de ensamblado obtienen un rendimiento competitivo sobre datos tabulares agregados sin la complejidad de diseño y validación que implicaría una arquitectura recurrente. La incorporación del SVM lineal como tercer clasificador proporciona además una referencia comparativa que evidencia con claridad los límites de los enfoques más simples y refuerza la elección de los métodos \textit{ensemble}.
+
+El prototipo de despliegue ha sido desarrollado como prueba de concepto funcional. El sistema permite seleccionar un partido del conjunto de test, explorar la predicción en cualquier minuto del encuentro y observar la evolución de las probabilidades a lo largo del partido. Una segunda sección implementa un simulador de estado de partido en el que el usuario puede ajustar el marcador, las estadísticas de juego y el tiempo transcurrido para obtener predicciones en tiempo real. Los detalles técnicos del prototipo se describen en el apartado de despliegue del capítulo de Desarrollo.
