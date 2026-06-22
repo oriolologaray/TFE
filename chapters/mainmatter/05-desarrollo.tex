@@ -740,13 +740,28 @@ Los datasets y modelos generados durante el desarrollo tienen un tamaño demasia
 
 El script filtra el dataset de modelado para conservar únicamente los partidos del conjunto de test, extrae los metadatos de cada partido y reduce el dataset de eventos a las columnas imprescindibles para la visualización. Los ficheros de datos resultantes se guardan en formato \textit{parquet} con compresión, y los modelos se copian o recomprimen en formato \textit{pickle}. Todo ello se almacena en la carpeta \texttt{app/data/}, de modo que todos los ficheros necesarios quedan dentro del límite de Git y pueden subirse al repositorio junto con el resto del código.
 
-\subsection{Estructura de la aplicación}
+\subsection{Arquitectura de la aplicación}
 
-
+El código de la aplicación se organiza en un número reducido de ficheros con responsabilidades bien delimitadas. El punto de entrada es \texttt{app.py}, que define la navegación entre las dos páginas mediante la API \texttt{st.navigation} de Streamlit, lo que permite asignar nombres y iconos a cada página con independencia del nombre del fichero. El módulo \texttt{data\_loader.py} centraliza todas las funciones de carga de datos y modelos con caché de sesión, de modo que los ficheros pesados se cargan una única vez con independencia de cuántas interacciones realice el usuario. Las dos páginas de la interfaz se encuentran en la carpeta \texttt{pages/} y son completamente independientes entre sí. Por último, la carpeta \texttt{data/} contiene los ficheros generados por \texttt{prepare\_app\_data.py} que se distribuyen junto con el código en el repositorio.
 
 \subsection{Interfaz de la aplicación}
 
+La interfaz se organiza en dos páginas accesibles desde el menú de navegación lateral. La primera permite explorar partidos reales del conjunto de test y consultar las predicciones del modelo a lo largo del encuentro. La segunda ofrece un simulador en el que el usuario puede construir escenarios hipotéticos de forma libre, sin necesidad de seleccionar un partido existente.
+
 \subsubsection{Dashboard de partido}
+
+La primera página de la aplicación permite explorar encuentros reales del conjunto de test y observar cómo evoluciona la predicción del modelo a lo largo del partido. En la parte superior, cuatro selectores encadenados permiten elegir el encuentro. El usuario escoge primero la competición, después la temporada disponible dentro de esa competición y por último el partido concreto, que aparece etiquetado con los dos equipos y el resultado final. Un cuarto selector permite cambiar el modelo con el que se realizan las predicciones entre los que se han incluido en el despliegue. Debajo de los selectores, un título destaca el partido elegido junto con una línea secundaria que recoge la competición, la temporada y el resultado final del encuentro.
+
+El contenido se reparte en dos pestañas. La primera, denominada \textit{Explorador}, reconstruye el partido minuto a minuto y muestra la predicción en el instante seleccionado. La segunda, \textit{Evolución de probabilidades}, presenta la trayectoria completa de las probabilidades a lo largo de los noventa minutos.
+
+En la pestaña \textit{Explorador}, un control deslizante permite situar cualquier minuto del encuentro entre el 1 y el 90, y todo lo que se muestra debajo se actualiza en función de ese valor. Justo debajo del deslizante aparece una cabecera con el nombre de ambos equipos y el marcador acumulado en el minuto escogido. A su derecha se muestra el bloque de probabilidades, formado por una barra que reparte el ancho disponible entre los tres posibles resultados y por tres cifras de gran tamaño que indican la probabilidad de victoria local, empate y victoria visitante.
+
+La parte central de la pestaña es una línea de tiempo que representa los eventos del partido sobre dos carriles contiguos. El carril superior, en azul, corresponde al equipo local y el inferior, en rojo, al visitante, cada uno con el nombre del equipo dentro de su propia franja. Los eventos se dibujan con formas geométricas según su tipo, de manera que un círculo representa un gol, un triángulo un tiro y un rombo una parada. Cada evento incluye una etiqueta con el tipo, el minuto y, en el caso de los goles, el marcador resultante. Los eventos anteriores al minuto seleccionado se muestran con color pleno, mientras que los posteriores aparecen atenuados, lo que refuerza la sensación de avanzar por el partido. Una línea vertical naranja marca el minuto activo y atraviesa ambos carriles y una marca de descanso señala el final de la primera parte. Cuando varios eventos se concentran en pocos minutos, sus etiquetas se reparten en distintas alturas para evitar que se solapen.
+
+Por debajo de la línea de tiempo, una tabla desplegable lista los eventos del partido hasta el minuto seleccionado, con un color de fondo distinto según el equipo al que pertenecen.
+
+La pestaña \textit{Evolución de probabilidades} muestra, para el mismo partido, cómo varían las tres probabilidades a lo largo de todo el encuentro. Se representa una curva por cada posible resultado sobre los noventa minutos, con marcas verticales en los minutos en los que se produce un gol y una referencia horizontal en el valor de probabilidad que correspondería al azar. Esta vista permite analizar el partido en su conjunto y comprobar cómo los goles y la acumulación de ocasiones desplazan la predicción del modelo.
+
 
 \subsubsection{Simulador}
 
@@ -758,4 +773,4 @@ La segunda página es un simulador que permite construir escenarios hipotéticos
     \item \textbf{Control del juego}: posesión y precisión de pase de ambos equipos.
 \end{itemize}
 
-A partir de estos valores, la aplicación construye el vector de 48 variables que requiere el modelo. Las variables que el usuario no controla directamente se inicializan con la mediana del conjunto de test como estado neutro, y las variables derivadas como la diferencia de goles, la diferencia de xG o los goles sobre xG se calculan automáticamente a partir de los valores introducidos. El usuario puede seleccionar el modelo con el que se realiza la predicción, y el resultado se muestra de forma inmediata con la misma barra apilada y tarjetas métricas del dashboard.
+A partir de estos valores, la aplicación construye el vector de 48 variables que requiere el modelo. Las variables que el usuario no controla directamente se inicializan con la mediana del conjunto de test como estado neutro, y las variables derivadas como la diferencia de goles, la diferencia de xG o los goles sobre xG se calculan automáticamente a partir de los valores introducidos. El usuario puede seleccionar el modelo con el que se realiza la predicción y el resultado se muestra de forma inmediata mediante una barra y tres cifras con la probabilidad de victoria local, empate y victoria visitante.
