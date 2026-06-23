@@ -1,4 +1,5 @@
 \chapter{Resumen}
-Redacta aquí un resumen breve del trabajo en español. Incluye objetivo, metodología, resultados y conclusiones en un máximo de 150 palabras.
+Este trabajo desarrolla un sistema de predicción dinámica de resultados de partidos de fútbol mediante técnicas de machine learning. El objetivo es estimar, minuto a minuto, la probabilidad de victoria local, empate y victoria visitante a partir de eventos históricos de StatsBomb Open Data transformados en variables acumuladas y diferenciales. Se construyó un dataset de modelado con métricas temporales del partido y se compararon Random Forest, XGBoost y un SVM lineal calibrado mediante una partición temporal de entrenamiento y test. Los resultados muestran que XGBoost obtiene el mejor rendimiento global, con un 65,4 \% de accuracy y una pérdida logarítmica de 0,753, mientras que Random Forest logra el mejor F1-score macro. El sistema supera claramente la línea base, aunque la predicción de empates sigue siendo la principal limitación. Finalmente, se desarrolla un prototipo web para consultar las probabilidades generadas por los modelos.
 
-\textbf{Palabras clave:} palabra clave 1; palabra clave 2; palabra clave 3.
+Palabras clave: predicción de resultados; fútbol; machine learning; eventos intrapartido; XGBoost.
+

@@ -9,7 +9,7 @@ Con el fin de que el objetivo general resulte específico, medible, alcanzable, 
     \item Realizar, durante la fase inicial del proyecto, una revisión bibliográfica sobre estudios existentes de predicción de resultados deportivos. El propósito de este objetivo es extraer criterios claros sobre tipos de datos, variables, algoritmos y métricas de evaluación que sirvan de base para el diseño experimental posterior.
     \item Recopilar y tratar los datos procedentes de \textit{StatsBomb Open Data}, llegando a obtener un repositorio de datos consistente y analizando sus limitaciones y ventajas para la predicción del resultado final.
     \item Construir un conjunto de variables explicativas agrupadas por segmentos temporales que describan el estado y la evolución del partido, incluyendo métricas acumuladas de rendimiento de ambos equipos. Este objetivo será satisfactorio si las variables generadas permiten representar de forma suficientemente informativa la evolución del encuentro.
-    \item Entrenar y comparar varios modelos de clasificación multiclase adecuados para el problema, incluyendo al menos modelos \textit{ensemble} y, si la disponibilidad de datos y tiempo lo permite, algún enfoque basado en aprendizaje profundo. Posteriormente, se seleccionarán los modelos con mejores rendimientos predictivos y se analizarán sus resultados en un conjunto de datos de tes.
+    \item Entrenar y comparar varios modelos de clasificación multiclase adecuados para el problema, incluyendo al menos modelos \textit{ensemble} y, si la disponibilidad de datos y tiempo lo permite, algún enfoque basado en aprendizaje profundo. Posteriormente, se seleccionarán los modelos con mejores rendimientos predictivos y se analizarán sus resultados en un conjunto de datos de test.
     \item Evaluar el sistema obtenido mediante métricas cuantitativas apropiadas para clasificación multiclase, incluyendo como mínimo \textit{accuracy} y medidas complementarias como \textit{F1-score}, y analizar su rendimiento en función del segmento temporal de juego. De forma específica, se establecerá como referencia de éxito alcanzar o aproximarse de manera justificada al 70\,\% de precisión en test, interpretando además en qué contextos temporales la predicción resulta más fiable.
     \item Integrar el modelo final en una solución que permita introducir o simular la evolución de un partido y visualizar la probabilidad estimada de cada resultado a lo largo del tiempo. Este objetivo se dará por cumplido cuando el sistema final pueda utilizarse como prueba de concepto funcional del enfoque desarrollado en el proyecto.
 \end{itemize}
@@ -52,16 +52,16 @@ El desarrollo del proyecto se ha estructurado en sprints de dos semanas siguiend
     \centering
     \begin{tabularx}{\textwidth}{|c|p{3cm}|X|}
         \hline
-        \textbf{Sprint} & \textbf{Período} & \textbf{Objetivo y actividades principales} \\
+        \textbf{Sprint} & \textbf{Período}       & \textbf{Objetivo y actividades principales}                                                                                                \\
         \hline
-        1 & \textit{por definir} & Revisión bibliográfica y selección de fuentes de datos. Estudio del repositorio StatsBomb Open Data y definición del alcance del problema. \\
-        2 & \textit{por definir} & Descarga y construcción del dataset de eventos. Implementación del script de descarga y verificación de integridad. \\
-        3 & \textit{por definir} & Análisis exploratorio de datos (EDA). Estudio de la distribución de clases, análisis temporal, correlaciones y limitaciones del dataset. \\
-        4 & \textit{por definir} & Ingeniería de características. Construcción del dataset de modelado con variables acumuladas, de ventana deslizante y derivadas. \\
-        5 & \textit{por definir} & Modelado inicial. Entrenamiento del modelo Random Forest con búsqueda de hiperparámetros. \\
-        6 & \textit{por definir} & Modelado comparativo. Entrenamiento de XGBoost y SVM lineal. Evaluación comparativa de los tres modelos. \\
-        7 & \textit{por definir} & Análisis de resultados e interpretabilidad. Análisis de importancia de variables y evaluación temporal por minuto. \\
-        8 & \textit{por definir} & Redacción de la memoria y desarrollo del prototipo de despliegue. \\
+        1               & \textit{25/03 - 08/04} & Revisión bibliográfica y selección de fuentes de datos. Estudio del repositorio StatsBomb Open Data y definición del alcance del problema. \\
+        2               & \textit{01/04 - 17/04} & Descarga y construcción del dataset de eventos. Implementación del script de descarga y verificación de integridad.                        \\
+        3               & \textit{17/04 - 01/05} & Análisis exploratorio de datos (EDA). Estudio de la distribución de clases, análisis temporal, correlaciones y limitaciones del dataset.   \\
+        4               & \textit{01/05 - 15/05} & Ingeniería de características. Construcción del dataset de modelado con variables acumuladas, de ventana deslizante y derivadas.           \\
+        5               & \textit{15/05 - 29/05} & Modelado inicial. Entrenamiento del modelo Random Forest con búsqueda de hiperparámetros.                                                  \\
+        6               & \textit{29/05 - 12/06} & Modelado comparativo. Entrenamiento de XGBoost y SVM lineal. Evaluación comparativa de los tres modelos.                                   \\
+        7               & \textit{29/05 - 12/06} & Análisis de resultados e interpretabilidad. Análisis de importancia de variables y evaluación temporal por minuto.                         \\
+        8               & \textit{01/04 - 24/06} & Redacción de la memoria y desarrollo del prototipo de despliegue.                                                                          \\
         \hline
     \end{tabularx}
     \caption{Cronograma ejecutado del proyecto por sprints}
@@ -81,19 +81,19 @@ La tabla~\ref{tab:cumplimiento} recoge el grado de cumplimiento de cada objetivo
     \centering
     \begin{tabularx}{\textwidth}{|p{5cm}|p{2.8cm}|X|}
         \hline
-        \textbf{Objetivo específico} & \textbf{Estado} & \textbf{Observaciones} \\
+        \textbf{Objetivo específico}                                       & \textbf{Estado}       & \textbf{Observaciones}                                                                                                                                                                                                                                                                                                                 \\
         \hline
-        Revisión bibliográfica sobre predicción de resultados deportivos & Cumplido & Se ha ampliado con trabajos recientes sobre Transformers, redes de grafos y calibración probabilística. \\
+        Revisión bibliográfica sobre predicción de resultados deportivos   & Cumplido              & Se ha ampliado con trabajos recientes sobre Transformers, redes de grafos y calibración probabilística.                                                                                                                                                                                                                                \\
         \hline
-        Recopilación y tratamiento de datos de StatsBomb Open Data & Cumplido & Dataset de 12,2\,M de eventos descargado, verificado y almacenado en \path{datasets/statsbomb_events.csv}. \\
+        Recopilación y tratamiento de datos de StatsBomb Open Data         & Cumplido              & Dataset de 12,2\,M de eventos descargado, verificado y almacenado en \path{datasets/statsbomb_events.csv}.                                                                                                                                                                                                                             \\
         \hline
-        Construcción de variables explicativas por segmentos temporales & Cumplido & Dataset de modelado con 48 variables generado: acumuladas, ventana deslizante y derivadas (\path{datasets/match_minute_features.csv}). \\
+        Construcción de variables explicativas por segmentos temporales    & Cumplido              & Dataset de modelado con 48 variables generado: acumuladas, ventana deslizante y derivadas (\path{datasets/match_minute_features.csv}).                                                                                                                                                                                                 \\
         \hline
-        Entrenamiento y comparación de modelos de clasificación multiclase & Parcialmente cumplido & Se han entrenado tres modelos (Random Forest, XGBoost y SVM lineal). No se ha incluido aprendizaje profundo: el LSTM previsto fue descartado por complejidad adicional sin beneficio claro sobre el enfoque de agregación adoptado. \\
+        Entrenamiento y comparación de modelos de clasificación multiclase & Parcialmente cumplido & Se han entrenado tres modelos (Random Forest, XGBoost y SVM lineal). No se ha incluido aprendizaje profundo: el LSTM previsto fue descartado por complejidad adicional sin beneficio claro sobre el enfoque de agregación adoptado.                                                                                                    \\
         \hline
-        Evaluación mediante métricas cuantitativas y análisis temporal & Cumplido & Los tres modelos se evalúan con \textit{accuracy}, F1-score macro y \textit{log-loss} en seis puntos temporales (min 15, 30, 45, 60, 75 y 90). El umbral del 70\,\% de precisión no se alcanza a nivel global (mejor resultado: 65,4\,\%), pero sí desde el minuto 60 en adelante, lo que es coherente con la naturaleza del problema. \\
+        Evaluación mediante métricas cuantitativas y análisis temporal     & Cumplido              & Los tres modelos se evalúan con \textit{accuracy}, F1-score macro y \textit{log-loss} en seis puntos temporales (min 15, 30, 45, 60, 75 y 90). El umbral del 70\,\% de precisión no se alcanza a nivel global (mejor resultado: 65,4\,\%), pero sí desde el minuto 60 en adelante, lo que es coherente con la naturaleza del problema. \\
         \hline
-        Integración del modelo en una solución interactiva & Pendiente & El modelo final (XGBoost) está serializado y listo para su integración. El desarrollo del prototipo de aplicación web está en curso. \\
+        Integración del modelo en una solución interactiva                 & Cumplido              & El modelo final XGBoost se ha integrado en un prototipo web desarrollado con Streamlit. La aplicación permite explorar partidos del conjunto de test, visualizar la evolución de probabilidades y simular estados de partido.                                                                                                          \\
         \hline
     \end{tabularx}
     \caption{Grado de cumplimiento de los objetivos específicos del proyecto}

@@ -68,7 +68,7 @@ El dataset contiene 33 tipos de evento con una distribución muy desigual. Los t
 
 La variable objetivo del problema es el resultado final del partido, que puede tomar tres valores, victoria local (\texttt{home\_win}), empate (\texttt{draw}) y victoria visitante (\texttt{away\_win}). Su distribución sobre los 3.464 partidos del dataset revela un desequilibrio moderado entre clases.
 
-La clase mayoritaria es la victoria local, con 1.565 partidos (45,2\%), seguida de la victoria visitante con 1.102 (31,8\%) y el empate con 797 (23,0\%). El ratio entre la clase más frecuente y la menos frecuente es de 1,96, lo que indica que la clase mayoritaria casi dobla a la minoritaria.
+La clase mayoritaria es la victoria local, con 1.565 partidos (45,2\%), seguida de la victoria visitante con 1.102 (31,8\%) y el empate con 797 (23,0\%). El ratio entre la clase más frecuente y la menos frecuente es de 1,96, lo que indica que la clase mayoritaria casi dobla a la minoritaria. (Los porcentages hacen referencia al conjunto completo de datos).
 
 \begin{figure}[H]
     \centering
@@ -756,12 +756,32 @@ El contenido se reparte en dos pestañas. La primera, denominada \textit{Explora
 
 En la pestaña \textit{Explorador}, un control deslizante permite situar cualquier minuto del encuentro entre el 1 y el 90, y todo lo que se muestra debajo se actualiza en función de ese valor. Justo debajo del deslizante aparece una cabecera con el nombre de ambos equipos y el marcador acumulado en el minuto escogido. A su derecha se muestra el bloque de probabilidades, formado por una barra que reparte el ancho disponible entre los tres posibles resultados y por tres cifras de gran tamaño que indican la probabilidad de victoria local, empate y victoria visitante.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/dashboard_explorador_1.png}
+    \caption{Vista principal del explorador de partido con selección de encuentro, minuto de análisis y probabilidades predichas}
+    \label{fig:dashboard_explorador_1}
+\end{figure}
+
 La parte central de la pestaña es una línea de tiempo que representa los eventos del partido sobre dos carriles contiguos. El carril superior, en azul, corresponde al equipo local y el inferior, en rojo, al visitante, cada uno con el nombre del equipo dentro de su propia franja. Los eventos se dibujan con formas geométricas según su tipo, de manera que un círculo representa un gol, un triángulo un tiro y un rombo una parada. Cada evento incluye una etiqueta con el tipo, el minuto y, en el caso de los goles, el marcador resultante. Los eventos anteriores al minuto seleccionado se muestran con color pleno, mientras que los posteriores aparecen atenuados, lo que refuerza la sensación de avanzar por el partido. Una línea vertical naranja marca el minuto activo y atraviesa ambos carriles y una marca de descanso señala el final de la primera parte. Cuando varios eventos se concentran en pocos minutos, sus etiquetas se reparten en distintas alturas para evitar que se solapen.
 
 Por debajo de la línea de tiempo, una tabla desplegable lista los eventos del partido hasta el minuto seleccionado, con un color de fondo distinto según el equipo al que pertenecen.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/dashboard_explorador_2.png}
+    \caption{Línea de tiempo de eventos y tabla de acciones del partido hasta el minuto seleccionado}
+    \label{fig:dashboard_explorador_2}
+\end{figure}
+
 La pestaña \textit{Evolución de probabilidades} muestra, para el mismo partido, cómo varían las tres probabilidades a lo largo de todo el encuentro. Se representa una curva por cada posible resultado sobre los noventa minutos, con marcas verticales en los minutos en los que se produce un gol y una referencia horizontal en el valor de probabilidad que correspondería al azar. Esta vista permite analizar el partido en su conjunto y comprobar cómo los goles y la acumulación de ocasiones desplazan la predicción del modelo.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/dashboard_evolucion_probabilidades.png}
+    \caption{Evolución de las probabilidades de victoria local, empate y victoria visitante durante el partido}
+    \label{fig:dashboard_evolucion_probabilidades}
+\end{figure}
 
 \subsubsection{Simulador}
 
@@ -773,4 +793,18 @@ La segunda página es un simulador que permite construir escenarios hipotéticos
     \item \textbf{Control del juego}: posesión y precisión de pase de ambos equipos.
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/simulador_1.png}
+    \caption{Controles del simulador para definir el estado del partido}
+    \label{fig:simulador_1}
+\end{figure}
+
 A partir de estos valores, la aplicación construye el vector de 48 variables que requiere el modelo. Las variables que el usuario no controla directamente se inicializan con la mediana del conjunto de test como estado neutro, y las variables derivadas como la diferencia de goles, la diferencia de xG o los goles sobre xG se calculan automáticamente a partir de los valores introducidos. El usuario puede seleccionar el modelo con el que se realiza la predicción y el resultado se muestra de forma inmediata mediante una barra y tres cifras con la probabilidad de victoria local, empate y victoria visitante.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{assets/figuras/simulador_2.png}
+    \caption{Resultado de la predicción generada por el simulador a partir del estado de partido introducido}
+    \label{fig:simulador_2}
+\end{figure}

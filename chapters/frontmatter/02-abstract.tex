@@ -1,4 +1,5 @@
 \chapter{Abstract}
-Write here a short abstract in English. Include the aim of the project, methodology, results, and conclusions in no more than 150 words.
+This project develops a dynamic system for predicting football match outcomes using machine learning techniques. Its aim is to estimate, minute by minute, the probability of a home win, draw and away win from historical StatsBomb Open Data events transformed into accumulated and differential match features. A modelling dataset was built with temporal indicators of the match state, and Random Forest, XGBoost and a calibrated linear SVM were compared using a temporal train-test split. The results show that XGBoost achieves the best overall performance, with 65.4\% accuracy and a log-loss of 0.753, while Random Forest obtains the best macro F1-score. All models clearly outperform the majority-class baseline, although draws remain the most difficult outcome to predict. Finally, a web prototype was developed to query the probabilities produced by the trained models and demonstrate the practical use of the proposed approach.
 
-\textbf{Keywords:} keyword 1; keyword 2; keyword 3.
+Keywords: outcome prediction; football; machine learning; in-match events; XGBoost.
+
