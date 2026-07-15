@@ -4,7 +4,7 @@
 
 El conjunto de resultados obtenidos confirma la viabilidad del enfoque propuesto: es posible predecir la probabilidad de victoria local, empate y victoria visitante a partir de métricas de partido acumuladas minuto a minuto, con un rendimiento claramente superior al de cualquier estrategia trivial.
 
-En el minuto 15, cuando el partido apenas ha comenzado y las diferencias entre equipos son todavía pequeñas, los modelos basados en árboles se sitúan en torno al 52--54\,\% de precisión. Esta cifra ya supera la línea base de predicción sistemática de la clase mayoritaria (42,9\,\%), lo que indica que incluso en los primeros compases del encuentro las variables construidas contienen información útil. Sin embargo, parece que los modelos son demasiado susceptibles a la variabilidad inicial. Por ejemplo, un disparo a puerta del equipo local puede decantar la balanza de probabilidades más a su favor de lo que se esperaría. A medida que el partido avanza y las métricas acumuladas reflejan con mayor fidelidad el desarrollo del juego, el rendimiento mejora de forma consistente: en el minuto 60 Random Forest supera el umbral de referencia del 70\,\% con un 70,4\,\%, y ambos modelos basados en árboles alcanzan más del 92\,\% al final del tiempo reglamentario, cuando el marcador y las estadísticas acumuladas determinan ya de forma casi directa el resultado final (recordamos que no tenemos en cuenta el tiempo de añadido en el análisis). Esta progresión puede observarse en la figura~\ref{fig:comparacion_modelos}.
+En el minuto 15, cuando el partido apenas ha comenzado y las diferencias entre equipos son todavía pequeñas, los modelos basados en árboles se sitúan en torno al 52--54\,\% de precisión. Esta cifra ya supera la línea base de predicción sistemática de la clase mayoritaria (42,9\,\%), lo que indica que incluso en los primeros compases del encuentro las variables construidas contienen información útil. Sin embargo, parece que los modelos son demasiado susceptibles a la variabilidad inicial. Por ejemplo, un disparo a puerta del equipo local puede decantar la balanza de probabilidades más a su favor de lo que se esperaría. A medida que el partido avanza y las métricas acumuladas reflejan con mayor fidelidad el desarrollo del juego, el rendimiento mejora de forma consistente: en el minuto 60 Random Forest supera el umbral de referencia del 70\,\% con un 70,4\,\%, y ambos modelos basados en árboles alcanzan más del 92\,\% al final del tiempo reglamentario, cuando el marcador y las estadísticas acumuladas determinan ya de forma casi directa el resultado final (cabe recordar que el tiempo de añadido no se tiene en cuenta en el análisis). Esta progresión puede observarse en la figura~\ref{fig:comparacion_modelos}.
 
 Entre los tres modelos evaluados, XGBoost ha sido seleccionado como modelo principal por combinar la mayor precisión global (65,4\,\%) con la menor pérdida logarítmica (0,753). La pérdida logarítmica evalúa la calidad de las probabilidades estimadas, no únicamente la clase predicha, y resulta especialmente relevante para el prototipo desarrollado, donde el usuario visualiza la distribución completa de probabilidades. Random Forest constituye una alternativa muy competitiva: aunque obtiene un \textit{accuracy} global ligeramente inferior (65,0\,\%), su F1-score macro es el mejor de los tres modelos (63,3\,\%) y presenta un comportamiento más equilibrado entre clases, con un \textit{recall} de la clase empate del 52\,\% frente al 44\,\% de XGBoost. El SVM lineal, incluido como referencia comparativa, cumple su función al evidenciar los límites de un clasificador lineal sobre este problema, pero queda descartado como opción principal por su escasa capacidad para identificar empates (3\,\% de \textit{recall}).
 
@@ -23,7 +23,7 @@ La comparación de los resultados obtenidos con los trabajos revisados en el est
         Baboota y Kaur (2019)                         &
         Prepartido                                    &
         65--70\,\% de precisión                       &
-        Igualamos su rango de precisión en predicción intrapartido, sin estadísticas históricas previas al encuentro. Sin embargo, nuestro modelo opera con menos información disponible.                                              \\
+        El sistema desarrollado iguala su rango de precisión en predicción intrapartido, sin estadísticas históricas previas al encuentro. Sin embargo, opera con menos información disponible.                                              \\
         \hline
         Gao y Kowalczyk (2019)                        &
         Prepartido                                    &
@@ -33,7 +33,7 @@ La comparación de los resultados obtenidos con los trabajos revisados en el est
         Horvat y Job (2020)                           &
         Revisión                                      &
         Sin métrica única                             &
-        Contextualiza nuestros resultados dentro del rango habitual en la literatura. La clasificación multiclase en fútbol es reconocida como un problema de alta dificultad.                                                         \\
+        Contextualiza los resultados obtenidos dentro del rango habitual en la literatura. La clasificación multiclase en fútbol es reconocida como un problema de alta dificultad.                                                         \\
         \hline
         Hvattum y Arntzen (2010)                      &
         Prepartido                                    &
@@ -43,7 +43,7 @@ La comparación de los resultados obtenidos con los trabajos revisados en el est
         Decroos et al.\ (2019)                        &
         Intrapartido                                  &
         Métrica VAEP (no clasificación)               &
-        Utilizan la misma fuente de datos (StatsBomb Open Data). Su enfoque valora acciones individuales; el nuestro las agrega en métricas temporales. Los enfoques son complementarios y validan mutuamente la riqueza de la fuente. \\
+        Utilizan la misma fuente de datos (StatsBomb Open Data). Su enfoque valora acciones individuales; el de este TFM las agrega en métricas temporales. Los enfoques son complementarios y validan mutuamente la riqueza de la fuente. \\
         \hline
         Zhang et al.\ (2022)                          &
         Intrapartido                                  &
