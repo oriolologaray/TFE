@@ -22,6 +22,20 @@
 
 \makeatletter
 
+% book class hardcodes \cleardoublepage in \frontmatter and \mainmatter regardless of
+% the openany option, inserting a blank page on even-numbered page transitions.
+% Override both to use \clearpage so no blank pages are inserted.
+\renewcommand{\frontmatter}{%
+  \clearpage
+  \@mainmatterfalse
+  \pagenumbering{roman}%
+}
+\renewcommand{\mainmatter}{%
+  \clearpage
+  \@mainmattertrue
+  \pagenumbering{arabic}%
+}
+
 \newcommand{\director}[1]{\gdef\@director{#1}}
 \newcommand{\nombreciudad}[1]{\gdef\@nombreciudad{#1}}
 \newcommand{\titulacion}[1]{\gdef\@titulacion{#1}}
